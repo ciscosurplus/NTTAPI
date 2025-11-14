@@ -1,0 +1,2028 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Workspace Client API specification",
+    "version": "3.0.0",
+    "description": "Endpoints and resources available through the exposed interface API interface"
+  },
+  "servers": [
+    {
+      "url": "https://api.ntth.ai/v1"
+    }
+  ],
+  "paths": {
+    "/workspace/workspaces": {
+      "get": {
+        "summary": "List all Workspaces for the user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listWorkspaces",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider"
+          },
+          {
+            "$ref": "#/components/parameters/workspaceType"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing an array of Workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListWorkspaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createWorkspace",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Create Workspace request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The newly created Workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}": {
+      "get": {
+        "summary": "Get a specific Workspace (must be the Workspace owner)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getWorkspace",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the full record of the workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a specific Workspace (must be the Workspace owner)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateWorkspace",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Update workspace request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the full record of the updated workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a specific Workspace (must be the Workspace owner)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteWorkspace",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "empty response"
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}/files": {
+      "get": {
+        "summary": "List all files for a Workspace",
+        "description": "List all files for the Workspace. This will update the status for the files from the provider in real-time.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listWorkspaceFiles",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of all files associated with the Workspace and their real-time status from the provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceFile"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a file to the Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "addWorkspaceFile",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "static"
+                    ]
+                  },
+                  "maxChunkSizeTokens": {
+                    "type": "number",
+                    "minimum": 100,
+                    "maximum": 4096
+                  },
+                  "chunkOverlapTokens": {
+                    "type": "number",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "199": {
+            "description": "Workaround to include FileChunkingType",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/FileChunkingType"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageEventType"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageEventFinal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "The newly uploaded file and its real-time status from the provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}/files/{fileId}": {
+      "delete": {
+        "summary": "Delete a file from the Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteWorkspaceFile",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          },
+          {
+            "$ref": "#/components/parameters/fileId-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "empty response"
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}/thread": {
+      "get": {
+        "summary": "Get/Create a Thread for the user for the Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getThread",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get the user Thread for this Workspace if allowed - will auto create one if no Thread currently exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete the user's Thread for this Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteThread",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "empty response"
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}/thread/messages": {
+      "get": {
+        "summary": "List all messages for the user and this Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listThreadMessages",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of ThreadMessages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListThreadMessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a specific message from a Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteThreadMessages",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Delete ThreadMessages Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteThreadMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "empty response"
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}/thread/run": {
+      "post": {
+        "summary": "Run a Thread with the new Prompt/Message against the Workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "runThread",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Run the Thread against the Workspace",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThreadMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A stream of responses",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageDeltaEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageCompletedEvent"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageEventFinal"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ThreadMessageErrorEvent"
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "Accept": {
+                "schema": {
+                  "type": "string",
+                  "example": "text/event-stream"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/shared": {
+      "post": {
+        "summary": "List the accessible shared (non-owned) Workspaces",
+        "description": "List all non-owned Workspaces shared availabled to the user based on the supplied list of Workspace IDs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listSharedWorkspaces",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "List Shared Workspaces request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListSharedWorkspacesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing an array of shared Workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSharedWorkspaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/workspaces/{id}/shared": {
+      "get": {
+        "summary": "Get the accessible shared (non-owned) Workspace",
+        "description": "Get a shared Workspace for chat usage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getSharedWorkspace",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing an array of shared Workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedWorkspaceExtended"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/workspace/threads": {
+      "get": {
+        "summary": "List all Threads (one per Workspace) for a user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listThreads",
+        "tags": [
+          "WorkspaceClient"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of all threads for the given user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListThreadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FileChunkingType": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "static"
+        ]
+      },
+      "WorkspaceProvider": {
+        "type": "string",
+        "enum": [
+          "openai"
+        ]
+      },
+      "WorkspaceType": {
+        "type": "string",
+        "enum": [
+          "assistant",
+          "rag"
+        ]
+      },
+      "ExtendedListResponse": {
+        "type": "object",
+        "properties": {
+          "totalItems": {
+            "description": "The total number of items for the query",
+            "type": "number"
+          },
+          "itemsOnPage": {
+            "description": "The number of items in this response",
+            "type": "number"
+          },
+          "pageNumber": {
+            "description": "The current page",
+            "type": "number"
+          },
+          "pageSize": {
+            "description": "How many items per page",
+            "type": "number"
+          }
+        }
+      },
+      "WorkspaceAccess": {
+        "type": "object",
+        "properties": {
+          "shared": {
+            "type": "boolean",
+            "description": "Is sharing enabled for this Workspace"
+          },
+          "tenantRestricted": {
+            "type": "boolean",
+            "description": "Is the Workspace restricted to sharing only within the owner's tenant"
+          }
+        },
+        "required": [
+          "shared",
+          "tenantRestricted"
+        ]
+      },
+      "ToolType": {
+        "type": "string",
+        "enum": [
+          "code_interpreter",
+          "file_search",
+          "function"
+        ]
+      },
+      "FileSearchOptions": {
+        "type": "object",
+        "properties": {
+          "maxNumResults": {
+            "type": "integer",
+            "nullable": true
+          },
+          "rankingOptions": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "FunctionOptions": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "strict": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "parameters",
+          "strict"
+        ]
+      },
+      "WorkspaceTool": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ToolType"
+          },
+          "fileSearch": {
+            "$ref": "#/components/schemas/FileSearchOptions",
+            "nullable": true
+          },
+          "function": {
+            "$ref": "#/components/schemas/FunctionOptions",
+            "nullable": true
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "CodeToolResourceOptions": {
+        "type": "object",
+        "properties": {
+          "fileIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "fileIds"
+        ]
+      },
+      "FileSearchToolResourceOptions": {
+        "type": "object",
+        "properties": {
+          "vectorStoreIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "WorkspaceConfiguration": {
+        "type": "object",
+        "properties": {
+          "instructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceTool"
+            },
+            "nullable": true
+          },
+          "toolResources": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/CodeToolResourceOptions",
+                "nullable": true
+              },
+              "fileSearch": {
+                "$ref": "#/components/schemas/FileSearchToolResourceOptions",
+                "nullable": true
+              }
+            },
+            "nullable": true
+          },
+          "temperature": {
+            "type": "number",
+            "default": 1
+          },
+          "topP": {
+            "type": "number",
+            "default": 1
+          },
+          "conversationPrimers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "temperature",
+          "topP",
+          "conversationPrimers"
+        ]
+      },
+      "Workspace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/WorkspaceProvider"
+          },
+          "modelId": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "filesOnly": {
+            "type": "boolean"
+          },
+          "access": {
+            "$ref": "#/components/schemas/WorkspaceAccess"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/WorkspaceConfiguration"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "tenantId",
+          "userId",
+          "provider",
+          "modelId",
+          "type",
+          "displayName",
+          "description",
+          "filesOnly",
+          "access",
+          "deleted",
+          "configuration",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ListWorkspaceResponse": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExtendedListResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateWorkspaceRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/WorkspaceProvider"
+          },
+          "modelId": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "access": {
+            "$ref": "#/components/schemas/WorkspaceAccess"
+          },
+          "filesOnly": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "configuration": {
+            "type": "object",
+            "properties": {
+              "instructions": {
+                "type": "string",
+                "nullable": true
+              },
+              "tools": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "nullable": true
+              },
+              "toolResources": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "object",
+                    "nullable": true
+                  },
+                  "fileSearch": {
+                    "type": "object",
+                    "nullable": true
+                  }
+                },
+                "nullable": true
+              },
+              "temperature": {
+                "type": "number",
+                "default": 1
+              },
+              "topP": {
+                "type": "number",
+                "default": 1
+              },
+              "conversationPrimers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "temperature",
+              "topP",
+              "conversationPrimers"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "modelId",
+          "type",
+          "displayName",
+          "description",
+          "access",
+          "configuration"
+        ]
+      },
+      "UpdateWorkspaceRequest": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "access": {
+            "$ref": "#/components/schemas/WorkspaceAccess",
+            "nullable": true
+          },
+          "filesOnly": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "configuration": {
+            "type": "object",
+            "properties": {
+              "instructions": {
+                "type": "string",
+                "nullable": true
+              },
+              "tools": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "nullable": true
+              },
+              "toolResources": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "object",
+                    "nullable": true
+                  },
+                  "fileSearch": {
+                    "type": "object",
+                    "nullable": true
+                  }
+                },
+                "nullable": true
+              },
+              "temperature": {
+                "type": "number",
+                "default": 1
+              },
+              "topP": {
+                "type": "number",
+                "default": 1
+              },
+              "conversationPrimers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "nullable": true
+          }
+        }
+      },
+      "WorkspaceFileStatus": {
+        "type": "string",
+        "enum": [
+          "in_progress",
+          "completed",
+          "cancelled",
+          "failed",
+          "unknown"
+        ]
+      },
+      "WorkspaceFile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The OpenAI fileId"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkspaceFileStatus"
+          },
+          "bytes": {
+            "type": "number",
+            "description": "The size of the file in bytes",
+            "example": 1500
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "ms since epoch that the file was created"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "status",
+          "bytes",
+          "createdAt"
+        ]
+      },
+      "ThreadMessageEventType": {
+        "type": "string",
+        "enum": [
+          "final",
+          "error",
+          "delta",
+          "annotations",
+          "completed"
+        ],
+        "description": "Event type of the thread message"
+      },
+      "ThreadMessageEvent": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/ThreadMessageEventType"
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "event",
+          "data"
+        ]
+      },
+      "MessageAnalytics": {
+        "type": "object",
+        "description": "Analytics for the chat",
+        "properties": {
+          "requestStartTime": {
+            "type": "number",
+            "description": "The time the request was received by the API seconds since epoch"
+          },
+          "providerStartTime": {
+            "type": "number",
+            "description": "The time the request was opened with the LLM provider"
+          },
+          "requestEndTime": {
+            "type": "number",
+            "description": "The time the response was sent back to the client"
+          }
+        }
+      },
+      "BasicUsage": {
+        "type": "object",
+        "properties": {
+          "promptTokens": {
+            "type": "integer",
+            "description": "Number of prompt tokens"
+          },
+          "responseTokens": {
+            "type": "integer",
+            "description": "Number of response tokens"
+          }
+        },
+        "required": [
+          "promptTokens",
+          "responseTokens"
+        ]
+      },
+      "MessageMetadata": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider of the message"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used for the message"
+          },
+          "analytics": {
+            "$ref": "#/components/schemas/MessageAnalytics"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/BasicUsage",
+            "nullable": true
+          }
+        },
+        "required": [
+          "provider",
+          "model"
+        ]
+      },
+      "ThreadMessageEventFinal": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ThreadMessageEvent"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "threadMessageIds": {
+                    "type": "object",
+                    "properties": {
+                      "user": {
+                        "type": "string"
+                      },
+                      "assistant": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "metadata": {
+                    "$ref": "#/components/schemas/MessageMetadata"
+                  }
+                },
+                "required": [
+                  "threadMessageIds",
+                  "metadata"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ThreadConfiguration": {
+        "type": "object",
+        "properties": {
+          "tools_resources": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/CodeToolResourceOptions",
+                "nullable": true
+              },
+              "fileSearch": {
+                "$ref": "#/components/schemas/FileSearchToolResourceOptions",
+                "nullable": true
+              }
+            },
+            "nullable": true
+          }
+        }
+      },
+      "schemas-ThreadConfiguration": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ThreadConfiguration"
+          }
+        ],
+        "nullable": true
+      },
+      "Thread": {
+        "description": "Thread interface schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the thread"
+          },
+          "providerId": {
+            "type": "string",
+            "description": "Identifier for the provider"
+          },
+          "workspaceId": {
+            "type": "string",
+            "description": "Identifier for the workspace"
+          },
+          "tenantId": {
+            "type": "string",
+            "description": "Identifier for the tenant"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Identifier for the user"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/schemas-ThreadConfiguration",
+            "description": "Configuration for the thread"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Indicates if the thread is deleted"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the thread was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the thread was last updated"
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "workspaceId",
+          "tenantId",
+          "userId",
+          "configuration",
+          "deleted",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ThreadMessageRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "assistant"
+        ],
+        "description": "Role of the message in the thread"
+      },
+      "MessageType": {
+        "type": "string",
+        "enum": [
+          "image",
+          "text"
+        ]
+      },
+      "FileCitationAnnotation": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "citation": {
+            "type": "object",
+            "properties": {
+              "fileId": {
+                "type": "string"
+              }
+            }
+          },
+          "startIndex": {
+            "type": "integer"
+          },
+          "endIndex": {
+            "type": "integer"
+          }
+        }
+      },
+      "FilePathAnnotation": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "filePath": {
+            "type": "object",
+            "properties": {
+              "fileId": {
+                "type": "string"
+              }
+            }
+          },
+          "startIndex": {
+            "type": "integer"
+          },
+          "endIndex": {
+            "type": "integer"
+          }
+        }
+      },
+      "MessageAnnotation": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/FileCitationAnnotation"
+          },
+          {
+            "$ref": "#/components/schemas/FilePathAnnotation"
+          }
+        ]
+      },
+      "ThreadTextMessageContent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/MessageType"
+          },
+          "text": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "annotations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MessageAnnotation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ImageType": {
+        "type": "string",
+        "enum": [
+          "file",
+          "url"
+        ],
+        "description": "Type of the image"
+      },
+      "ThreadImageFileMessageContent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image"
+            ]
+          },
+          "imageType": {
+            "$ref": "#/components/schemas/ImageType"
+          },
+          "file": {
+            "type": "object",
+            "properties": {
+              "fileId": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ThreadImageUrlMessageContent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image"
+            ]
+          },
+          "imageType": {
+            "$ref": "#/components/schemas/ImageType"
+          },
+          "file": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ThreadMessageContent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ThreadTextMessageContent"
+          },
+          {
+            "$ref": "#/components/schemas/ThreadImageFileMessageContent"
+          },
+          {
+            "$ref": "#/components/schemas/ThreadImageUrlMessageContent"
+          }
+        ]
+      },
+      "ThreadMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ThreadMessageRole"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThreadMessageContent"
+            },
+            "nullable": true
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadata",
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListThreadMessageResponse": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExtendedListResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ThreadMessage"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeleteThreadMessageRequest": {
+        "type": "object",
+        "description": "ThreadMessages to delete",
+        "properties": {
+          "threadMessageIds": {
+            "type": "array",
+            "description": "An array of ThreadMessage GUIDs to delete",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maximum": 10,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "threadMessageIds"
+        ]
+      },
+      "ThreadRequestTextMessageContent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text"
+            ]
+          },
+          "text": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ThreadMessageRequestContent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ThreadRequestTextMessageContent"
+          },
+          {
+            "$ref": "#/components/schemas/ThreadImageFileMessageContent"
+          },
+          {
+            "$ref": "#/components/schemas/ThreadImageUrlMessageContent"
+          }
+        ]
+      },
+      "ThreadMessageRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/ThreadMessageRole"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThreadMessageRequestContent"
+            }
+          },
+          "stream": {
+            "type": "boolean"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "topP": {
+            "type": "number"
+          }
+        }
+      },
+      "ThreadMessageDeltaEvent": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadMessageEventType"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "enum": [
+              "delta"
+            ],
+            "description": "Value will always be delta"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ThreadTextMessageContent"
+          }
+        },
+        "required": [
+          "event",
+          "data"
+        ]
+      },
+      "ThreadMessageCompletedEvent": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadMessageEventType"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "enum": [
+              "completed"
+            ],
+            "description": "Value will always be completed"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "description": "The data object (may be null)."
+          }
+        },
+        "required": [
+          "event",
+          "data"
+        ]
+      },
+      "ThreadMessageErrorEvent": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreadMessageEventType"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "enum": [
+              "error"
+            ],
+            "description": "Value will always be error"
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "data"
+        ]
+      },
+      "ListSharedWorkspacesRequest": {
+        "type": "object",
+        "properties": {
+          "workspaceIds": {
+            "type": "array",
+            "items": {
+              "description": "Workspace UUIDS",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SharedWorkspace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "type",
+          "deleted"
+        ]
+      },
+      "ListSharedWorkspaceResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SharedWorkspace"
+        }
+      },
+      "SharedWorkspaceExtended": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "object",
+            "properties": {
+              "instructions": {
+                "type": "string",
+                "nullable": true
+              },
+              "conversationPrimers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "type",
+          "deleted"
+        ]
+      },
+      "ListThreadResponse": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ExtendedListResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "provider": {
+        "in": "query",
+        "name": "provider",
+        "description": "The Workspace provider",
+        "schema": {
+          "$ref": "#/components/schemas/WorkspaceProvider"
+        }
+      },
+      "workspaceType": {
+        "in": "query",
+        "name": "type",
+        "description": "The Workspace type",
+        "schema": {
+          "$ref": "#/components/schemas/WorkspaceType"
+        }
+      },
+      "id-inPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "fileId-inPath": {
+        "name": "fileId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "400Response": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "BAD_REQUEST"
+                }
+              }
+            }
+          }
+        }
+      },
+      "403Response": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "INSUFFICIENT_PRIVILEGES"
+                }
+              }
+            }
+          }
+        }
+      },
+      "500Response": {
+        "description": "Message",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
