@@ -1,0 +1,2341 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Chat Client API specification",
+    "version": "3.0.0",
+    "description": "Endpoints and resources available through the exposed interface API interface"
+  },
+  "servers": [
+    {
+      "url": "https://0.0.0.0/v1"
+    }
+  ],
+  "paths": {
+    "/chat": {
+      "post": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "chatCompletion",
+        "tags": [
+          "ChatClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Chat Completion",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/200Response"
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/follow-up": {
+      "post": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "chatFollowUp",
+        "summary": "Get suggested follow-up questions for a prompt",
+        "tags": [
+          "ChatClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Chat Follow-Up Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatFollowUpRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A array of follow-up questions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatFollowUpResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/models": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listModels",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/modelProvider"
+          },
+          {
+            "$ref": "#/components/parameters/modelType"
+          },
+          {
+            "$ref": "#/components/parameters/modelClassification"
+          },
+          {
+            "$ref": "#/components/parameters/modelCapabilities"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing an array of the summary of the supported LLM Models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/chats": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listChats",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/searchText"
+          },
+          {
+            "$ref": "#/components/parameters/searchTag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing an array of the summary of the chats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListChatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteChats",
+        "tags": [
+          "ChatClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Chat Completion",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "empty response"
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/chats/{id}": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getChat",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the full record of the chat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Chat"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateChat",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Update chat request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the full record of the updated chat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Chat"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/chats/tags": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getChatTags",
+        "tags": [
+          "ChatClient"
+        ],
+        "responses": {
+          "200": {
+            "description": "An array of string tags currently used by the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/image/get/{id}": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getImageById",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          },
+          {
+            "$ref": "#/components/parameters/base64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A string response representing the image",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/users/termsofservice": {
+      "put": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "setUserTermsOfService",
+        "tags": [
+          "ChatClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "User Terms of Service Data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserTermsOfServiceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/termsofservice/current": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getCurrentTermsOfService",
+        "tags": [
+          "ChatClient"
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the latest terms of service",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermsOfService"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/users/profile/workspace": {
+      "put": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "addSharedWorkspace",
+        "summary": "Add a Shared Workspace",
+        "tags": [
+          "ChatClient"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSharedWorkspaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/users/profile/workspace/{id}": {
+      "patch": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateSharedWorkspace",
+        "tags": [
+          "ChatClient"
+        ],
+        "summary": "Update a Shared Workspaces",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSharedWorkspaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteSharedWorkspace",
+        "tags": [
+          "ChatClient"
+        ],
+        "summary": "Delete a Shared Workspaces",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/users/{id}/profile": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getUserProfile",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateUserProfile",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "User Profile Data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      },
+      "patch": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "patchUserProfile",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "User Profile Data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON object containing the User Profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/providers": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listProviders",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/name"
+          },
+          {
+            "$ref": "#/components/parameters/id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing an array of the supported LLM Providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProvidersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/providers/{id}": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getProvider",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "199": {
+            "description": "A JSON object for websocket messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaygroundControlProtocolMessage"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "A JSON object containing the Provider data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ChatSettings": {
+        "type": "object",
+        "description": "The possible settings for a chat Completion",
+        "properties": {
+          "maxTokens": {
+            "type": "number",
+            "description": "The maximum tokens for the prompt"
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "Stream the response in real time",
+            "default": true
+          },
+          "presencePenalty": {
+            "type": "number",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
+          },
+          "stop": {
+            "type": "string",
+            "description": "Up to 4 sequences where the API will stop generating further tokens.",
+            "nullable": true
+          },
+          "frequencyPenalty": {
+            "type": "number",
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."
+          },
+          "topP": {
+            "type": "number",
+            "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered."
+          },
+          "temperature": {
+            "type": "number",
+            "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic."
+          },
+          "seed": {
+            "type": "number",
+            "description": "Seed used for sampling. The provider attempts to return the same response to the same request with an identical seed."
+          }
+        }
+      },
+      "MessageType": {
+        "type": "string",
+        "enum": [
+          "image",
+          "text",
+          "file"
+        ]
+      },
+      "MessageAnalytics": {
+        "type": "object",
+        "description": "Analytics for the chat",
+        "properties": {
+          "requestStartTime": {
+            "type": "number",
+            "description": "The time the request was received by the API seconds since epoch"
+          },
+          "providerStartTime": {
+            "type": "number",
+            "description": "The time the request was opened with the LLM provider"
+          },
+          "requestEndTime": {
+            "type": "number",
+            "description": "The time the response was sent back to the client"
+          }
+        }
+      },
+      "BasicUsage": {
+        "type": "object",
+        "properties": {
+          "promptTokens": {
+            "type": "integer",
+            "description": "Number of prompt tokens"
+          },
+          "responseTokens": {
+            "type": "integer",
+            "description": "Number of response tokens"
+          }
+        },
+        "required": [
+          "promptTokens",
+          "responseTokens"
+        ]
+      },
+      "MessageMetadata": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider of the message"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used for the message"
+          },
+          "analytics": {
+            "$ref": "#/components/schemas/MessageAnalytics"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/BasicUsage",
+            "nullable": true
+          }
+        },
+        "required": [
+          "provider",
+          "model"
+        ]
+      },
+      "AttachmentType": {
+        "type": "string",
+        "enum": [
+          "image",
+          "file"
+        ]
+      },
+      "BaseAttachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AttachmentType"
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ]
+      },
+      "ImageType": {
+        "type": "string",
+        "enum": [
+          "file",
+          "url"
+        ]
+      },
+      "ImageDetail": {
+        "type": "string",
+        "enum": [
+          "low",
+          "high",
+          "auto"
+        ]
+      },
+      "ImageContent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ImageType"
+          },
+          "url": {
+            "type": "string",
+            "description": "Either a URL of the image or the base64 encoded image data."
+          },
+          "detail": {
+            "$ref": "#/components/schemas/ImageDetail"
+          }
+        },
+        "required": [
+          "type",
+          "url",
+          "detail"
+        ]
+      },
+      "ImageAttachment": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseAttachment"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "content": {
+                "$ref": "#/components/schemas/ImageContent"
+              }
+            },
+            "required": [
+              "content"
+            ]
+          }
+        ]
+      },
+      "Attachment": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ImageAttachment"
+          }
+        ]
+      },
+      "SafeGuardBreakdownItem": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "The project ID."
+          },
+          "policy_id": {
+            "type": "string",
+            "description": "The policy ID."
+          },
+          "detector_id": {
+            "type": "string",
+            "description": "The detector ID."
+          },
+          "detector_type": {
+            "type": "string",
+            "description": "The type of the detector."
+          },
+          "detected": {
+            "type": "boolean",
+            "description": "Whether the detector detected something."
+          }
+        },
+        "required": [
+          "project_id",
+          "policy_id",
+          "detector_id",
+          "detector_type",
+          "detected"
+        ]
+      },
+      "SafeGuardPayloadItem": {
+        "type": "object",
+        "properties": {
+          "detector_type": {
+            "type": "string",
+            "description": "The type of the detector."
+          },
+          "start": {
+            "type": "integer",
+            "description": "The start position of the detected text."
+          },
+          "end": {
+            "type": "integer",
+            "description": "The end position of the detected text."
+          },
+          "text": {
+            "type": "string",
+            "description": "The detected text."
+          }
+        },
+        "required": [
+          "detector_type",
+          "start",
+          "end",
+          "text"
+        ]
+      },
+      "SafeGuardDetails": {
+        "type": "object",
+        "properties": {
+          "flagged": {
+            "type": "boolean",
+            "description": "Whether the message is flagged."
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SafeGuardBreakdownItem"
+            },
+            "description": "The breakdown of the detection."
+          },
+          "payload": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SafeGuardPayloadItem"
+            },
+            "description": "The payload of the detection."
+          }
+        },
+        "required": [
+          "flagged",
+          "breakdown",
+          "payload"
+        ]
+      },
+      "MessageSender": {
+        "type": "string",
+        "enum": [
+          "server",
+          "client"
+        ],
+        "description": "The sender of the message."
+      },
+      "MessageDataType": {
+        "type": "string",
+        "enum": [
+          "error",
+          "safeGuard",
+          "status",
+          "metadata",
+          "heartbeat",
+          "xchat"
+        ],
+        "description": "The type of the message data."
+      },
+      "ErrorData": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "The error code.",
+            "example": 9999
+          },
+          "message": {
+            "type": "string",
+            "description": "The error message."
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "StatusData": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The status message."
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SafeGuardSource": {
+        "type": "string",
+        "enum": [
+          "user_prompt",
+          "llm_response"
+        ]
+      },
+      "SafeGuardData": {
+        "type": "object",
+        "properties": {
+          "chatId": {
+            "type": "string",
+            "description": "The chat ID."
+          },
+          "source": {
+            "$ref": "#/components/schemas/SafeGuardSource"
+          },
+          "message": {
+            "type": "string",
+            "description": "The security message."
+          },
+          "details": {
+            "$ref": "#/components/schemas/SafeGuardDetails"
+          }
+        }
+      },
+      "Metadata": {
+        "type": "object",
+        "properties": {
+          "analytics": {
+            "$ref": "#/components/schemas/MessageAnalytics"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/BasicUsage"
+          }
+        }
+      },
+      "XchatMessageType": {
+        "description": "xChat PGCP Message sub type",
+        "type": "string",
+        "enum": [
+          "error",
+          "status",
+          "nlu"
+        ]
+      },
+      "PgcpXchatStatus": {
+        "description": "PGCP xChat Status data payload",
+        "properties": {
+          "xchatMessageType": {
+            "$ref": "#/components/schemas/XchatMessageType"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StatusData"
+          }
+        ],
+        "required": [
+          "xchatMessageType"
+        ]
+      },
+      "RoutingIntent": {
+        "type": "string",
+        "enum": [
+          "general",
+          "realtime",
+          "reasoning",
+          "translation",
+          "image-generation"
+        ]
+      },
+      "LlmMetadata": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ]
+      },
+      "NluMetadata": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LlmMetadata"
+          }
+        ]
+      },
+      "IntentAnalytics": {
+        "type": "object",
+        "properties": {
+          "requestStartTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "providerStartTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestEndTime": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "requestStartTime",
+          "providerStartTime",
+          "requestEndTime"
+        ]
+      },
+      "LlmUsage": {
+        "type": "object",
+        "properties": {
+          "promptTokens": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseTokens": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProviderUsage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LlmUsage"
+          }
+        ]
+      },
+      "IntentMetadata": {
+        "type": "object",
+        "properties": {
+          "nlu": {
+            "$ref": "#/components/schemas/NluMetadata"
+          },
+          "analytics": {
+            "$ref": "#/components/schemas/IntentAnalytics"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/ProviderUsage"
+          }
+        },
+        "required": [
+          "nlu",
+          "analytics"
+        ]
+      },
+      "ChatNluResponse": {
+        "type": "object",
+        "properties": {
+          "chatId": {
+            "type": "string"
+          },
+          "routingIntent": {
+            "$ref": "#/components/schemas/RoutingIntent"
+          },
+          "reason": {
+            "type": "string",
+            "description": "The reason for the intent decision"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/IntentMetadata"
+          }
+        },
+        "required": [
+          "chatId",
+          "routingIntent",
+          "reason",
+          "metadata"
+        ]
+      },
+      "PgcpXchatNlu": {
+        "description": "PGCP xChat NLU data payload",
+        "properties": {
+          "xchatMessageType": {
+            "$ref": "#/components/schemas/XchatMessageType"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StatusData"
+          },
+          {
+            "$ref": "#/components/schemas/ChatNluResponse"
+          }
+        ],
+        "required": [
+          "xchatMessageType"
+        ]
+      },
+      "PgcpXchatError": {
+        "description": "PGCP xChat Error data payload",
+        "properties": {
+          "xchatMessageType": {
+            "$ref": "#/components/schemas/XchatMessageType"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ErrorData"
+          }
+        ],
+        "required": [
+          "xchatMessageType"
+        ]
+      },
+      "PgcpXchat": {
+        "description": "PGCP xChat data payload",
+        "oneOf": [
+          {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PgcpXchatStatus"
+              },
+              {
+                "$ref": "#/components/schemas/PgcpXchatNlu"
+              },
+              {
+                "$ref": "#/components/schemas/PgcpXchatError"
+              }
+            ]
+          }
+        ]
+      },
+      "PlaygroundControlProtocolMessage": {
+        "type": "object",
+        "description": "a reusable websocket message that can be used by both client and server",
+        "required": [
+          "sender",
+          "type",
+          "sessionId",
+          "data",
+          "timestamp"
+        ],
+        "properties": {
+          "sender": {
+            "$ref": "#/components/schemas/MessageSender"
+          },
+          "type": {
+            "$ref": "#/components/schemas/MessageDataType"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "The session ID."
+          },
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ErrorData"
+              },
+              {
+                "$ref": "#/components/schemas/StatusData"
+              },
+              {
+                "$ref": "#/components/schemas/SafeGuardData"
+              },
+              {
+                "$ref": "#/components/schemas/Metadata"
+              },
+              {
+                "$ref": "#/components/schemas/PgcpXchat"
+              }
+            ]
+          },
+          "timestamp": {
+            "type": "integer",
+            "description": "The timestamp of the message."
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user",
+              "assistant"
+            ],
+            "description": "Role of the message"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content of the message"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the message",
+            "nullable": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/MessageType",
+            "nullable": true
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadata",
+            "nullable": true
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            },
+            "description": "Attachments in the message",
+            "nullable": true
+          },
+          "safeGuardDetails": {
+            "$ref": "#/components/schemas/SafeGuardDetails",
+            "description": "Guard Rails Details for the message",
+            "nullable": true
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaygroundControlProtocolMessage"
+            }
+          },
+          "citations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "BasicMessage": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "description": "Role of the message"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content of the message"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "SafeGuardStatus": {
+        "description": "Enum representing the possible SafeGuard status values",
+        "type": "string",
+        "enum": [
+          "disabled",
+          "monitor",
+          "enforced"
+        ]
+      },
+      "SafeGuardConfigurationStyle": {
+        "description": "Enum representing the possible SafeGuard configuration styles",
+        "type": "string",
+        "enum": [
+          "easy",
+          "advanced"
+        ]
+      },
+      "SafeGuardConfigurationLevel": {
+        "description": "Enum representing the possible SafeGuard configuration levels",
+        "type": "string",
+        "enum": [
+          "disabled",
+          "one",
+          "two",
+          "three",
+          "four"
+        ]
+      },
+      "SafeGuardConfiguration": {
+        "type": "object",
+        "description": "The individual configuration settings",
+        "properties": {
+          "moderation": {
+            "$ref": "#/components/schemas/SafeGuardConfigurationLevel"
+          },
+          "personalInformation": {
+            "$ref": "#/components/schemas/SafeGuardConfigurationLevel"
+          },
+          "promptInjection": {
+            "$ref": "#/components/schemas/SafeGuardConfigurationLevel"
+          },
+          "unknownLinks": {
+            "$ref": "#/components/schemas/SafeGuardConfigurationLevel"
+          }
+        },
+        "required": [
+          "moderation",
+          "personalInformation",
+          "promptInjection",
+          "unknownLinks"
+        ]
+      },
+      "SafeGuardSettings": {
+        "type": "object",
+        "description": "The SafeGuard settings used for the chat",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/SafeGuardStatus"
+          },
+          "configurationStyle": {
+            "$ref": "#/components/schemas/SafeGuardConfigurationStyle"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/SafeGuardConfiguration"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ChatRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ChatSettings"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "ID of the chat"
+              },
+              "modelId": {
+                "type": "string",
+                "description": "Model ID used for the chat",
+                "format": "uuid"
+              },
+              "messages": {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Message"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BasicMessage"
+                    }
+                  ]
+                },
+                "description": "Messages in the chat"
+              },
+              "safeGuardSettings": {
+                "$ref": "#/components/schemas/SafeGuardSettings"
+              }
+            }
+          }
+        ],
+        "required": [
+          "id",
+          "modelId",
+          "messages"
+        ]
+      },
+      "ChatFollowUpRequest": {
+        "type": "object",
+        "properties": {
+          "chatId": {
+            "type": "string",
+            "description": "ID of the chat"
+          },
+          "message": {
+            "type": "string",
+            "description": "The message to generate the follow-up suggestions for"
+          }
+        },
+        "required": [
+          "id",
+          "message"
+        ]
+      },
+      "ChatFollowUpResponse": {
+        "type": "array",
+        "description": "An array of strings that represent the suggested follow-up questions",
+        "items": {
+          "type": "string",
+          "description": "Follow-up question"
+        }
+      },
+      "ModelClassification": {
+        "description": "Enum representing the classification of a model.",
+        "type": "string",
+        "enum": [
+          "text",
+          "image-generation",
+          "vision",
+          "omni"
+        ]
+      },
+      "ModelCapabilities": {
+        "description": "Enum representing the capabilities of a model.",
+        "type": "string",
+        "enum": [
+          "image-generation",
+          "text",
+          "vision",
+          "tools",
+          "reasoning",
+          "asr",
+          "tts",
+          "document",
+          "workspace"
+        ]
+      },
+      "BasicModel": {
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "userId",
+          "messages",
+          "providerPriority",
+          "priority"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "description": "The LLM Model provider",
+            "example": "azure"
+          },
+          "type": {
+            "type": "string",
+            "description": "The LLM Model type",
+            "example": "openai"
+          },
+          "name": {
+            "type": "string",
+            "description": "The LLM Model name",
+            "example": "gpt-4"
+          },
+          "deploymentName": {
+            "type": "string",
+            "description": "The LLM Model provider deployment name",
+            "example": "gpt-4"
+          },
+          "version": {
+            "type": "string",
+            "description": "The LLM Model version",
+            "example": 613
+          },
+          "classification": {
+            "$ref": "#/components/schemas/ModelClassification"
+          },
+          "capabilities": {
+            "description": "An array of model capabilities",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelCapabilities"
+            }
+          },
+          "providerPriority": {
+            "description": "The priority of this model across all models of all classifications for its provider",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "priority": {
+            "description": "The priority of this model within its classification",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2020-08-04T16:02:44.591Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2020-08-04T16:02:44.591Z"
+          }
+        }
+      },
+      "ListModelsResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/BasicModel"
+        }
+      },
+      "Chat": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the chat"
+          },
+          "tenantId": {
+            "type": "string",
+            "description": "Tenant ID of the chat"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID of the chat"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp of the chat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Update timestamp of the chat"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "description": "Messages in the chat"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags of the chat"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Deletion status of the chat"
+          },
+          "isSafeGuardFlagged": {
+            "type": "boolean",
+            "description": "Used to determine if this chat was flagged or not"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/BasicUsage",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "userId",
+          "createdAt",
+          "updatedAt",
+          "messages",
+          "tags",
+          "deleted"
+        ]
+      },
+      "ListChatResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Chat"
+        }
+      },
+      "DeleteChatRequest": {
+        "type": "object",
+        "required": [
+          "chatIds"
+        ],
+        "properties": {
+          "chatIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "UpdateChatRequest": {
+        "type": "object",
+        "description": "Update chat request JSON",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "description": "Array of searchable tags",
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "description": "Searchable tag",
+              "maxLength": 32
+            }
+          }
+        }
+      },
+      "UpdateUserTermsOfServiceRequest": {
+        "type": "object",
+        "description": "Update the status of the user's acceptance of the latest terms of service",
+        "required": [
+          "accepted"
+        ],
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "description": "Has the user accepted the terms of service",
+            "default": false
+          }
+        }
+      },
+      "UserTermsOfService": {
+        "type": "object",
+        "description": "The user's terms of service status",
+        "required": [
+          "accepted",
+          "date",
+          "version"
+        ],
+        "properties": {
+          "accepted": {
+            "type": "boolean",
+            "description": "Has the user accepted the terms of service",
+            "default": false
+          },
+          "date": {
+            "type": "number",
+            "description": "The time in milliseconds since epoch that the user accepted the terms of service",
+            "example": 1719519337123
+          },
+          "version": {
+            "type": "string",
+            "description": "The latest version of the terms of service that the user has accepted",
+            "example": "1.0"
+          }
+        }
+      },
+      "CommunicationsPreferences": {
+        "type": "object",
+        "description": "Communications preferences for a user.",
+        "required": [
+          "subscribeToNotifications"
+        ],
+        "properties": {
+          "subscribeToNotifications": {
+            "type": "boolean",
+            "description": "The user is subscribed to receive notifications."
+          }
+        }
+      },
+      "WorkspaceType": {
+        "type": "string",
+        "enum": [
+          "assistant",
+          "rag"
+        ]
+      },
+      "UserProfileSharedWorkspace": {
+        "type": "object",
+        "description": "Workspace Personalization",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType"
+          },
+          "nickName": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean",
+            "description": "Is the linked Workspace"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "pinned"
+        ]
+      },
+      "BasicUserProfile": {
+        "type": "object",
+        "description": "Basic User Profile information",
+        "properties": {
+          "defaults": {
+            "type": "object",
+            "description": "The default settings for the user profile",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "description": "The default LLM provider to use",
+                "example": "azure"
+              },
+              "model": {
+                "type": "string",
+                "description": "The default LLM to use",
+                "example": "gpt-4o"
+              },
+              "pastMessages": {
+                "type": "number",
+                "description": "The number of past messages in the chat to pass to the LLM",
+                "default": 10
+              },
+              "enableAnalytics": {
+                "type": "boolean",
+                "description": "Enable chat analytics for chat completions",
+                "default": false
+              },
+              "language": {
+                "type": "string",
+                "description": "The user chosen language",
+                "default": "en"
+              },
+              "systemPrompt": {
+                "type": "string",
+                "description": "The user chosen default system prompt",
+                "default": "You are an AI assistant that helps answering questions"
+              },
+              "chatSettings": {
+                "$ref": "#/components/schemas/ChatSettings"
+              }
+            }
+          }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "description": "Basic User Profile information",
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the user profile"
+              },
+              "tenantId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The tenantId of the owner of the user profile"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The userId of the owner of the user profile"
+              },
+              "termsOfService": {
+                "$ref": "#/components/schemas/UserTermsOfService"
+              },
+              "communicationsPreferences": {
+                "$ref": "#/components/schemas/CommunicationsPreferences"
+              },
+              "sharedWorkspaces": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UserProfileSharedWorkspace"
+                }
+              },
+              "safeGuardSettings": {
+                "$ref": "#/components/schemas/SafeGuardSettings"
+              },
+              "distractionFreeMode": {
+                "type": "boolean",
+                "default": false,
+                "description": "Tells if Distraction Free Mode is activated or not"
+              },
+              "createdAt": {
+                "type": "string",
+                "example": "2020-08-04T16:02:44.591Z"
+              },
+              "updatedAt": {
+                "type": "string",
+                "example": "2020-08-04T16:02:44.591Z"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/BasicUserProfile"
+          }
+        ]
+      },
+      "TermsOfService": {
+        "type": "object",
+        "description": "A terms of service record",
+        "required": [
+          "id",
+          "version",
+          "current",
+          "filename",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the terms of service",
+            "example": "1.0"
+          },
+          "current": {
+            "type": "boolean",
+            "description": "Is this the most current iteration terms of service"
+          },
+          "filename": {
+            "type": "string",
+            "description": "The PDF filename of the terms of service in the client portal"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2020-08-04T16:02:44.591Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2020-08-04T16:02:44.591Z"
+          }
+        }
+      },
+      "AddSharedWorkspaceRequest": {
+        "type": "object",
+        "description": "Save a Workspace",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/WorkspaceType"
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ]
+      },
+      "UpdateSharedWorkspaceRequest": {
+        "type": "object",
+        "description": "Update a saved Workspace",
+        "properties": {
+          "nickName": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean",
+            "description": "Is the linked Workspace"
+          }
+        }
+      },
+      "UpdateUserProfileRequest": {
+        "type": "object",
+        "description": "User User Profile payload",
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "communicationsPreferences": {
+                "$ref": "#/components/schemas/CommunicationsPreferences"
+              },
+              "safeGuardSettings": {
+                "$ref": "#/components/schemas/SafeGuardSettings"
+              },
+              "distractionFreeMode": {
+                "type": "boolean",
+                "default": false,
+                "description": "Tells if Distraction Free Mode is activated or not"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/BasicUserProfile"
+          }
+        ]
+      },
+      "Provider": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The LLM provider name",
+            "example": "openai"
+          },
+          "version": {
+            "type": "string",
+            "example": 613
+          },
+          "versionOrTier": {
+            "type": "string",
+            "example": "API Tier5"
+          },
+          "termsOfUseUrl": {
+            "type": "string",
+            "description": "The LLM provider terms of service url",
+            "example": "https://openai.com/policies/row-terms-of-use/"
+          },
+          "dataPrivacyUrl": {
+            "type": "string",
+            "description": "The LLM provider data privacy url",
+            "example": "https://openai.com/enterprise-privacy/"
+          },
+          "contentModerationUrl": {
+            "type": "string",
+            "description": "The LLM provider content moderation url",
+            "example": "https://platform.openai.com/docs/guides/moderation"
+          },
+          "trustSiteUrl": {
+            "type": "string",
+            "description": "The LLM provider trust site url",
+            "example": "https://trust.openai.com/"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2020-08-04T16:02:44.591Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2020-08-04T16:02:44.591Z"
+          }
+        }
+      },
+      "ListProvidersResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Provider"
+        }
+      }
+    },
+    "responses": {
+      "200Response": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400Response": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "BAD_REQUEST"
+                }
+              }
+            }
+          }
+        }
+      },
+      "403Response": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "INSUFFICIENT_PRIVILEGES"
+                }
+              }
+            }
+          }
+        }
+      },
+      "500Response": {
+        "description": "Message",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "modelProvider": {
+        "in": "query",
+        "name": "provider",
+        "description": "The model provider",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "modelType": {
+        "in": "query",
+        "name": "type",
+        "description": "The model type",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "modelClassification": {
+        "in": "query",
+        "name": "classification",
+        "description": "The model type",
+        "schema": {
+          "$ref": "#/components/schemas/ModelClassification"
+        }
+      },
+      "modelCapabilities": {
+        "in": "query",
+        "name": "capabilities",
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ModelCapabilities"
+          }
+        }
+      },
+      "searchText": {
+        "in": "query",
+        "name": "search",
+        "description": "The text to search for in the chat history",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "searchTag": {
+        "in": "query",
+        "name": "tag",
+        "description": "The tag to search for in the chat history",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "id-inPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "base64": {
+        "in": "query",
+        "name": "base64",
+        "description": "Encode the image using base64",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "name": {
+        "in": "query",
+        "name": "name",
+        "schema": {
+          "type": "string",
+          "minLength": 3
+        }
+      },
+      "id": {
+        "in": "query",
+        "name": "id",
+        "description": "The unique identifier of a data type",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
