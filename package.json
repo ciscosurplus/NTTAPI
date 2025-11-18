@@ -1,0 +1,63 @@
+{
+  "name": "ntth-api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway for NTTH API with OpenAI-compatible endpoints, token management, and usage tracking",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migrate": "node-pg-migrate",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "api-gateway",
+    "ntth",
+    "openai",
+    "proxy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3",
+    "redis": "^4.6.10",
+    "axios": "^1.6.2",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1",
+    "express-rate-limit": "^7.1.5",
+    "rate-limit-redis": "^4.2.0",
+    "winston": "^3.11.0",
+    "morgan": "^1.10.0",
+    "joi": "^17.11.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.4",
+    "@types/cors": "^2.8.17",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/uuid": "^9.0.7",
+    "@types/morgan": "^1.9.9",
+    "@types/compression": "^1.7.5",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "typescript": "^5.3.3",
+    "ts-node-dev": "^2.0.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.10",
+    "ts-jest": "^29.1.1",
+    "node-pg-migrate": "^6.2.2"
+  }
+}
