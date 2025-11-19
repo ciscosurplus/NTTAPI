@@ -25,7 +25,7 @@ class NTTHProxyService {
       maxTokens: openaiRequest.max_tokens,
       stream: openaiRequest.stream || false,
       presencePenalty: openaiRequest.presence_penalty,
-      stop: openaiRequest.stop || null,
+      stop: Array.isArray(openaiRequest.stop) ? openaiRequest.stop[0] : openaiRequest.stop || null,
       frequencyPenalty: openaiRequest.frequency_penalty,
       topP: openaiRequest.top_p,
       temperature: openaiRequest.temperature,

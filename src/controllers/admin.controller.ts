@@ -340,7 +340,7 @@ export const getUsageTrends = async (req: Request, res: Response): Promise<void>
 /**
  * Get token usage summary
  */
-export const getTokenUsageSummary = async (req: Request, res: Response): Promise<void> => {
+export const getTokenUsageSummary = async (_req: Request, res: Response): Promise<void> => {
   try {
     const summary = await usageService.getTokenUsageSummary();
 
