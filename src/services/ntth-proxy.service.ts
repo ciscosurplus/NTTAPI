@@ -73,7 +73,7 @@ class NTTHProxyService {
   ): Promise<OpenAIChatCompletionResponse> {
     try {
       const ntthRequest = this.transformChatRequest(openaiRequest);
-      const client = await ntthAuthService.createAuthenticatedClient();
+      const client = await ntthAuthService.getAuthenticatedClient();
 
       logger.debug('Sending chat request to NTTH API', {
         model: ntthRequest.modelId,
@@ -117,7 +117,7 @@ class NTTHProxyService {
    */
   async listModels(): Promise<OpenAIModel[]> {
     try {
-      const client = await ntthAuthService.createAuthenticatedClient();
+      const client = await ntthAuthService.getAuthenticatedClient();
 
       logger.debug('Fetching models from NTTH API');
 

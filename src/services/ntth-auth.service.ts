@@ -8,6 +8,7 @@ dotenv.config();
 
 class NTTHAuthService {
   private axiosInstance: AxiosInstance;
+  private authenticatedAxiosInstance: AxiosInstance | null = null;
   private baseURL: string;
   private appId: string;
   private appSecret: string;
@@ -185,7 +186,71 @@ class NTTHAuthService {
   }
 
   /**
+   * Get reusable authenticated axios instance for NTTH API calls
+   * This is the preferred method - reuses a single instance with automatic token refresh
+   */
+  async getAuthenticatedClient(): Promise<AxiosInstance> {
+    // Create the instance on first use
+    if (!this.authenticatedAxiosInstance) {
+      this.authenticatedAxiosInstance = axios.create({
+        baseURL: this.baseURL,
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Add request interceptor to inject current valid token
+      this.authenticatedAxiosInstance.interceptors.request.use(
+        async (config) => {
+          // Get valid token (will refresh if needed)
+          const token = await this.getToken();
+
+          // Inject token into Authorization header
+          if (config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+
+          logger.debug('NTTH Authenticated API Request:', {
+            method: config.method,
+            url: config.url,
+            hasToken: !!token,
+          });
+
+          return config;
+        },
+        (error) => {
+          logger.error('NTTH Authenticated API Request Error:', error);
+          return Promise.reject(error);
+        }
+      );
+
+      // Add response interceptor for logging
+      this.authenticatedAxiosInstance.interceptors.response.use(
+        (response) => {
+          logger.debug('NTTH Authenticated API Response:', {
+            status: response.status,
+            url: response.config.url,
+          });
+          return response;
+        },
+        (error) => {
+          logger.error('NTTH Authenticated API Response Error:', {
+            status: error.response?.status,
+            message: error.message,
+            url: error.config?.url,
+          });
+          return Promise.reject(error);
+        }
+      );
+    }
+
+    return this.authenticatedAxiosInstance;
+  }
+
+  /**
    * Create authenticated axios instance for NTTH API calls
+   * @deprecated Use getAuthenticatedClient() instead for better performance
    */
   async createAuthenticatedClient(): Promise<AxiosInstance> {
     const token = await this.getToken();
@@ -195,7 +260,7 @@ class NTTHAuthService {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: token,
+        Authorization: `Bearer ${token}`,
       },
     });
   }
