@@ -387,6 +387,98 @@
         }
       }
     },
+    "/chat/image/status/{id}": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getImageStatus",
+        "summary": "Get the status of an image generation job",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id-inPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image generation job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "404": {
+            "$ref": "#/components/responses/404Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
+    "/chat/pipeline/jobs": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listPipelineJobs",
+        "summary": "List all image generation jobs with optional filtering",
+        "tags": [
+          "ChatClient"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pipelineStatus"
+          },
+          {
+            "$ref": "#/components/parameters/pipelineChatId"
+          },
+          {
+            "$ref": "#/components/parameters/pipelineLimit"
+          },
+          {
+            "$ref": "#/components/parameters/pipelineOffset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of pipeline jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineJobsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400Response"
+          },
+          "403": {
+            "$ref": "#/components/responses/403Response"
+          },
+          "500": {
+            "$ref": "#/components/responses/500Response"
+          }
+        }
+      }
+    },
     "/chat/users/termsofservice": {
       "put": {
         "security": [
@@ -2193,6 +2285,161 @@
         "items": {
           "$ref": "#/components/schemas/Provider"
         }
+      },
+      "ImageGenerationStatus": {
+        "type": "string",
+        "description": "Status of an image generation job",
+        "enum": [
+          "pending",
+          "in_progress",
+          "completed",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "ImageGenerationJob": {
+        "type": "object",
+        "description": "Image generation job details",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier for the image generation job"
+          },
+          "chatId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The chat ID associated with this image generation"
+          },
+          "modelId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The model ID used for generation"
+          },
+          "provider": {
+            "type": "string",
+            "description": "The provider used for image generation",
+            "example": "openai"
+          },
+          "model": {
+            "type": "string",
+            "description": "The model name",
+            "example": "dall-e-3"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The prompt used for image generation"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ImageGenerationStatus"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL to retrieve the generated image (only available when status is completed)",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if status is failed",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the job was created"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the job processing started",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the job was completed or failed",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the job",
+            "properties": {
+              "size": {
+                "type": "string",
+                "description": "Image size (e.g., 1024x1024)",
+                "example": "1024x1024"
+              },
+              "quality": {
+                "type": "string",
+                "description": "Image quality setting",
+                "example": "standard"
+              },
+              "style": {
+                "type": "string",
+                "description": "Image style",
+                "example": "vivid"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "chatId",
+          "modelId",
+          "provider",
+          "model",
+          "prompt",
+          "status",
+          "createdAt"
+        ]
+      },
+      "ImageStatusResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ImageGenerationJob"
+          }
+        ]
+      },
+      "PipelineJobsResponse": {
+        "type": "object",
+        "description": "Response containing pipeline jobs",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageGenerationJob"
+            },
+            "description": "List of image generation jobs"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of jobs matching the filter"
+          },
+          "pending": {
+            "type": "integer",
+            "description": "Number of pending jobs"
+          },
+          "inProgress": {
+            "type": "integer",
+            "description": "Number of in-progress jobs"
+          },
+          "completed": {
+            "type": "integer",
+            "description": "Number of completed jobs"
+          },
+          "failed": {
+            "type": "integer",
+            "description": "Number of failed jobs"
+          }
+        },
+        "required": [
+          "jobs",
+          "total",
+          "pending",
+          "inProgress",
+          "completed",
+          "failed"
+        ]
       }
     },
     "responses": {
@@ -2230,6 +2477,21 @@
                 "message": {
                   "type": "string",
                   "example": "INSUFFICIENT_PRIVILEGES"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404Response": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "RESOURCE_NOT_FOUND"
                 }
               }
             }
@@ -2334,6 +2596,44 @@
         "description": "The unique identifier of a data type",
         "schema": {
           "type": "string"
+        }
+      },
+      "pipelineStatus": {
+        "in": "query",
+        "name": "status",
+        "description": "Filter jobs by status",
+        "schema": {
+          "$ref": "#/components/schemas/ImageGenerationStatus"
+        }
+      },
+      "pipelineChatId": {
+        "in": "query",
+        "name": "chatId",
+        "description": "Filter jobs by chat ID",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "pipelineLimit": {
+        "in": "query",
+        "name": "limit",
+        "description": "Maximum number of jobs to return",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "pipelineOffset": {
+        "in": "query",
+        "name": "offset",
+        "description": "Number of jobs to skip (for pagination)",
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
         }
       }
     }

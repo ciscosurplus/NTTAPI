@@ -77,6 +77,9 @@ Authorization: Bearer <token>
 - `POST /chat/follow-up` - Generate follow-up questions
 - `GET /chat/chats` - List chat history
 - `GET /chat/users/{id}/profile` - Get user profile
+- `GET /chat/image/get/{id}` - Download generated image
+- `GET /chat/image/status/{id}` - Check image generation job status (NEW)
+- `GET /chat/pipeline/jobs` - List all image generation jobs with filtering (NEW)
 
 **Model Capabilities**:
 - `text` - Text generation
@@ -267,7 +270,21 @@ curl -X POST https://api.ntth.ai/v1/chat \
 
 # Step 3: Response contains image ID after "WAIT_FOR_IMAGE"
 # Extract ID and download: /chat/image/get/{imageId}
+
+# Step 4: Check image generation status (NEW)
+curl -X GET https://api.ntth.ai/v1/chat/image/status/{imageId} \
+  -H "Authorization: Bearer $TOKEN"
+
+# Step 5: List all pipeline jobs with filtering (NEW)
+curl -X GET 'https://api.ntth.ai/v1/chat/pipeline/jobs?status=in_progress&limit=10' \
+  -H "Authorization: Bearer $TOKEN"
 ```
+
+**Image Pipeline Management (NEW)**:
+- `GET /chat/image/status/{id}` - Check status of specific image generation job
+- `GET /chat/pipeline/jobs` - List all image generation jobs with filtering
+  - Query params: `status`, `chatId`, `limit`, `offset`
+  - Returns job counts and detailed status information
 
 ## Key Conventions for AI Assistants
 
@@ -405,7 +422,29 @@ GET /chat/models?provider=azure&type=openai
 }
 ```
 
-### 5. Thread Management
+### 5. Image Pipeline Status Tracking (NEW)
+
+```javascript
+// Image generation is asynchronous
+// Check status with GET /chat/image/status/{id}
+{
+  "id": "image-job-uuid",
+  "status": "pending|in_progress|completed|failed|cancelled",
+  "imageUrl": "/chat/image/get/image-job-uuid",  // Only when completed
+  "errorMessage": "Error details"  // Only when failed
+}
+
+// List all jobs with filtering
+GET /chat/pipeline/jobs?status=in_progress&limit=10
+```
+
+**Best Practices**:
+- Poll `/chat/image/status/{id}` to check job progress
+- Use `/chat/pipeline/jobs` to monitor multiple jobs
+- Filter by `status=in_progress` to track active generations
+- Set reasonable `limit` values for pagination (default: 20, max: 100)
+
+### 6. Thread Management
 
 - One thread per user per workspace
 - Threads maintain conversation history
@@ -460,6 +499,72 @@ finalResult: {"requestStartTime":123,"providerStartTime":456,"requestEndTime":78
 {"event":"completed","data":null}
 {"event":"final","data":{"threadMessageIds":{...},"metadata":{...}}}
 ```
+
+### Image Generation Status Response (NEW)
+
+```json
+{
+  "id": "image-job-uuid",
+  "chatId": "chat-uuid",
+  "modelId": "model-uuid",
+  "provider": "openai",
+  "model": "dall-e-3",
+  "prompt": "A cat in space",
+  "status": "completed",
+  "imageUrl": "/chat/image/get/image-job-uuid",
+  "errorMessage": null,
+  "createdAt": "2025-11-19T10:00:00.000Z",
+  "startedAt": "2025-11-19T10:00:01.000Z",
+  "completedAt": "2025-11-19T10:00:15.000Z",
+  "metadata": {
+    "size": "1024x1024",
+    "quality": "standard",
+    "style": "vivid"
+  }
+}
+```
+
+**Status Values**:
+- `pending` - Job queued, not started
+- `in_progress` - Currently generating
+- `completed` - Image ready (check `imageUrl`)
+- `failed` - Generation failed (check `errorMessage`)
+- `cancelled` - Job was cancelled
+
+### Pipeline Jobs List Response (NEW)
+
+```json
+{
+  "jobs": [
+    {
+      "id": "job-1-uuid",
+      "chatId": "chat-uuid",
+      "status": "completed",
+      "prompt": "A cat in space",
+      "imageUrl": "/chat/image/get/job-1-uuid",
+      ...
+    },
+    {
+      "id": "job-2-uuid",
+      "chatId": "chat-uuid",
+      "status": "in_progress",
+      "prompt": "A dog on the moon",
+      ...
+    }
+  ],
+  "total": 25,
+  "pending": 3,
+  "inProgress": 2,
+  "completed": 18,
+  "failed": 2
+}
+```
+
+**Query Parameters**:
+- `status` - Filter by status (pending, in_progress, completed, failed, cancelled)
+- `chatId` - Filter by chat ID
+- `limit` - Max results (1-100, default: 20)
+- `offset` - Pagination offset (default: 0)
 
 ## Important Notes for AI Development
 
