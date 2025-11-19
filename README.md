@@ -1,10 +1,50 @@
-# NTTH API Gateway
+# NTTAPI Repository
 
-🚀 **OpenAI-compatible API Gateway for NTTH API**
+🚀 **NTTH AI Platform - API Documentation & OpenAI-Compatible Gateway**
 
-A production-ready API gateway that provides an OpenAI-compatible interface to the NTTH API, with built-in token management, usage tracking, and analytics.
+This repository contains two primary components:
+1. **NTTH API Documentation** - Complete OpenAPI specifications and developer guides for the NTTH AI Platform
+2. **API Gateway Implementation** - Production-ready OpenAI-compatible gateway with token management and usage tracking
 
-## ✨ Features
+## 📋 Table of Contents
+
+- [What's Inside](#-whats-inside)
+- [Gateway Features](#-gateway-features)
+- [Documentation](#-documentation)
+  - [OpenAPI Specifications](#openapi-specifications)
+- [Which Option Should I Use?](#-which-option-should-i-use)
+- [Quick Start](#-quick-start)
+  - [Option 1: Using NTTH API Directly](#option-1-using-ntth-api-directly)
+  - [Option 2: Deploy API Gateway](#option-2-deploy-api-gateway-recommended-for-production)
+- [API Endpoints](#-api-endpoints)
+- [Usage with OpenAI SDK](#-usage-with-openai-sdk)
+- [Architecture](#-architecture)
+- [Technology Stack](#-technology-stack)
+- [Security Best Practices](#-security-best-practices)
+- [Support](#-support)
+
+## 📦 What's Inside
+
+### NTTH API Documentation
+Complete documentation for the NTTH AI Platform API (`https://api.ntth.ai/v1`):
+
+- **`auth.json`** - AuthX Service OpenAPI 3.0.2 specification (authentication & authorization)
+- **`chat.json`** - Chat Client API OpenAPI spec (LLM chat completions, models, profiles)
+- **`workspace.json`** - Workspace Client API spec (RAG workspaces, file management)
+- **`ntth.md`** - Comprehensive developer documentation with examples
+- **`voice.md`** - Voice Agent API documentation and templates
+- **`CLAUDE.md`** - AI assistant integration guide
+
+### API Gateway Implementation
+Production-ready gateway that provides an OpenAI-compatible interface to NTTH API:
+
+- **Token management** with rate limiting per key
+- **Usage analytics** and request logging
+- **OpenAI SDK compatibility** (drop-in replacement)
+- **Docker deployment** with PostgreSQL and Redis
+- **Admin endpoints** for user/token management
+
+## ✨ Gateway Features
 
 - **🔌 OpenAI-Compatible** - Drop-in replacement for OpenAI SDK clients
 - **🔐 Token Management** - Secure API key generation and management
@@ -18,13 +58,119 @@ A production-ready API gateway that provides an OpenAI-compatible interface to t
 
 ## 📚 Documentation
 
+### For NTTH API Users
+- **[NTTH API Developer Guide](./ntth.md)** - Complete examples and usage patterns
+- **[Voice Agent Guide](./voice.md)** - Voice assistant templates and configuration
+- **[AI Assistant Guide](./CLAUDE.md)** - Context for AI-powered development
+
+### For Gateway Deployment
 - **[Setup Guide](./SETUP_README.md)** - Installation and configuration
-- **[API Documentation](./API_DOCUMENTATION.md)** - Complete API reference
-- **[NTTH API Specs](./ntth.md)** - Original NTTH API documentation
+- **[API Documentation](./API_DOCUMENTATION.md)** - Complete gateway API reference
+
+### OpenAPI Specifications
+The repository includes OpenAPI 3.0.2 specifications that can be imported into API tools:
+
+```bash
+# Import into Postman, Insomnia, or Swagger Editor
+auth.json       # Authentication API specification
+chat.json       # Chat/LLM API specification
+workspace.json  # RAG Workspace API specification
+```
+
+**Using with API Clients:**
+- **Postman**: Import → Select OpenAPI 3.0 → Choose auth.json, chat.json, or workspace.json
+- **Insomnia**: Import/Export → Import from file → Select specification file
+- **Swagger Editor**: File → Import file → Choose specification
+- **OpenAPI Generator**: Generate client SDKs in any language
+
+**Example: Generate Python client**
+```bash
+npm install -g @openapitools/openapi-generator-cli
+openapi-generator-cli generate \
+  -i chat.json \
+  -g python \
+  -o ./python-client
+```
+
+## 🤔 Which Option Should I Use?
+
+### Use NTTH API Directly (Option 1) if:
+- ✅ You want to integrate directly with NTTH AI Platform
+- ✅ You're building a simple application or proof-of-concept
+- ✅ You don't need usage analytics or token management
+- ✅ You have your NTTH API credentials ready
+
+### Use API Gateway (Option 2) if:
+- ✅ You want OpenAI SDK compatibility (drop-in replacement)
+- ✅ You need to manage multiple users/customers with separate API keys
+- ✅ You require usage tracking, analytics, and rate limiting
+- ✅ You want to control costs and monitor API consumption
+- ✅ You're building a production SaaS application
 
 ## 🚀 Quick Start
 
-### Using Docker (Recommended)
+### Option 1: Using NTTH API Directly
+
+If you want to use the NTTH API directly without the gateway:
+
+#### Prerequisites
+- NTTH API credentials (Application ID and Secret)
+- Access to `https://api.ntth.ai/v1`
+
+#### Installation
+```bash
+# Clone the repository for documentation
+git clone <repository-url>
+cd NTTAPI
+
+# Read the documentation
+cat ntth.md        # Developer guide with examples
+cat voice.md       # Voice agent documentation
+cat CLAUDE.md      # AI assistant integration guide
+```
+
+#### Basic Usage
+```bash
+# 1. Authenticate with NTTH API
+TOKEN=$(curl -X POST https://api.ntth.ai/v1/auth/appLogin \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"your-app-id","secret":"your-app-secret"}' | jq -r '.token')
+
+# 2. List available models
+curl -X GET https://api.ntth.ai/v1/chat/models \
+  -H "Authorization: Bearer $TOKEN"
+
+# 3. Send a chat request
+curl -X POST https://api.ntth.ai/v1/chat \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream" \
+  -d '{
+    "id": "'$(uuidgen)'",
+    "modelId": "your-model-uuid",
+    "messages": [{"role":"user","content":"Hello!"}],
+    "stream": true
+  }'
+```
+
+See **[ntth.md](./ntth.md)** for comprehensive examples including:
+- RAG workspace setup
+- Function calling / tool use
+- Image generation
+- Voice agent configuration
+
+---
+
+### Option 2: Deploy API Gateway (Recommended for Production)
+
+Deploy the OpenAI-compatible gateway for easier integration and usage tracking.
+
+#### Prerequisites
+- Docker and Docker Compose (recommended) OR
+- Node.js 18+, PostgreSQL 14+, Redis 7+ (manual setup)
+- NTTH API credentials (Application ID and Secret)
+
+#### Using Docker (Recommended)
 
 ```bash
 # 1. Clone the repository
