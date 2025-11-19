@@ -11,6 +11,8 @@
     "migrate:up": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down",
     "test": "jest",
+    "test:auth": "jest tests/ntth-auth.test.ts",
+    "test:connection": "ts-node scripts/test-ntth-connection.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
