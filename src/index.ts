@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 import logger from './config/logger';
 import { connectRedis } from './config/redis';
 import { pool } from './config/database';
@@ -22,7 +23,16 @@ const PORT = process.env.PORT || 3000;
 /**
  * Middleware
  */
-app.use(helmet()); // Security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+})); // Security headers with CSP for dashboard
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: process.env.CORS_CREDENTIALS === 'true',
@@ -30,6 +40,9 @@ app.use(cors({
 app.use(compression()); // Compress responses
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // HTTP request logging
 app.use(morgan('combined', {
@@ -41,7 +54,7 @@ app.use(morgan('combined', {
 /**
  * Health check endpoint
  */
-app.get('/health', async (req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   try {
     // Check database connection
     await pool.query('SELECT 1');
@@ -64,15 +77,23 @@ app.get('/health', async (req: Request, res: Response) => {
 });
 
 /**
- * Root endpoint
+ * Root endpoint - Serve dashboard
  */
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+/**
+ * API info endpoint
+ */
+app.get('/api/info', (_req: Request, res: Response) => {
   res.json({
     name: 'NTTH API Gateway',
     version: '1.0.0',
     description: 'OpenAI-compatible API gateway for NTTH API',
     endpoints: {
       health: '/health',
+      dashboard: '/',
       openai: '/v1/*',
       admin: '/admin/*',
     },
@@ -102,7 +123,7 @@ app.use((req: Request, res: Response) => {
 /**
  * Global error handler
  */
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Unhandled error:', {
     error: err.message,
     stack: err.stack,
@@ -151,6 +172,7 @@ async function start() {
     app.listen(PORT, () => {
       logger.info(`NTTH API Gateway is running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`Dashboard: http://localhost:${PORT}/`);
       logger.info(`Health check: http://localhost:${PORT}/health`);
       logger.info(`OpenAI API: http://localhost:${PORT}/v1/chat/completions`);
       logger.info(`Admin API: http://localhost:${PORT}/admin/tokens`);

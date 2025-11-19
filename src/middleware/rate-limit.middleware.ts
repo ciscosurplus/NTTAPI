@@ -37,7 +37,6 @@ export const rateLimitByToken = async (
     const maxRequests = token.rate_limit || DEFAULT_MAX_REQUESTS;
     const windowMs = DEFAULT_WINDOW_MS;
     const now = Date.now();
-    const windowStart = now - windowMs;
 
     // Redis key for this token
     const key = `rate_limit:token:${tokenId}`;
