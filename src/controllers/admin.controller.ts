@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import tokenService from '../services/token.service';
 import usageService from '../services/usage.service';
+import ntthAuthService from '../services/ntth-auth.service';
 import logger from '../config/logger';
 
 /**
@@ -38,6 +39,122 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     logger.error('Failed to create user:', error);
     res.status(500).json({
       error: error.message || 'Failed to create user',
+    });
+  }
+};
+
+/**
+ * List all users
+ */
+export const listUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 100;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const users = await tokenService.listAllUsers(limit, offset);
+
+    res.json({
+      success: true,
+      users,
+      pagination: {
+        limit,
+        offset,
+        count: users.length,
+      },
+    });
+  } catch (error: any) {
+    logger.error('Failed to list users:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to list users',
+    });
+  }
+};
+
+/**
+ * Get user by ID
+ */
+export const getUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    const user = await tokenService.getUserById(userId);
+
+    if (!user) {
+      res.status(404).json({
+        error: 'User not found',
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error: any) {
+    logger.error('Failed to get user:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to get user',
+    });
+  }
+};
+
+/**
+ * Update user
+ */
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { name, email } = req.body;
+
+    const user = await tokenService.updateUser(userId, { name, email });
+
+    if (!user) {
+      res.status(404).json({
+        error: 'User not found',
+      });
+      return;
+    }
+
+    logger.info('User updated via admin API', { user_id: userId });
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error: any) {
+    logger.error('Failed to update user:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to update user',
+    });
+  }
+};
+
+/**
+ * Delete user
+ */
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    const success = await tokenService.deleteUser(userId);
+
+    if (!success) {
+      res.status(404).json({
+        error: 'User not found',
+      });
+      return;
+    }
+
+    logger.info('User deleted via admin API', { user_id: userId });
+
+    res.json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error: any) {
+    logger.error('Failed to delete user:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to delete user',
     });
   }
 };
@@ -234,6 +351,75 @@ export const deleteToken = async (req: Request, res: Response): Promise<void> =>
     logger.error('Failed to delete token:', error);
     res.status(500).json({
       error: error.message || 'Failed to delete token',
+    });
+  }
+};
+
+/**
+ * Regenerate token
+ */
+export const regenerateToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tokenId } = req.params;
+
+    const token = await tokenService.regenerateToken(tokenId);
+
+    if (!token) {
+      res.status(404).json({
+        error: 'Token not found',
+      });
+      return;
+    }
+
+    logger.info('Token regenerated via admin API', { token_id: tokenId });
+
+    res.json({
+      success: true,
+      token,
+      warning: 'Save this new token securely. The old token is now invalid.',
+    });
+  } catch (error: any) {
+    logger.error('Failed to regenerate token:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to regenerate token',
+    });
+  }
+};
+
+/**
+ * Test NTTH API connection
+ */
+export const testNtthConnection = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { appId, appSecret } = req.body;
+
+    // Test with provided credentials or existing ones
+    let testResult;
+
+    if (appId && appSecret) {
+      // Test with new credentials (don't save)
+      testResult = await ntthAuthService.testConnection(appId, appSecret);
+    } else {
+      // Test with existing configuration
+      if (!ntthAuthService.isConfigured()) {
+        res.status(400).json({
+          success: false,
+          error: 'NTTH API is not configured. Provide appId and appSecret to test.',
+        });
+        return;
+      }
+      testResult = await ntthAuthService.testConnection();
+    }
+
+    logger.info('NTTH connection test completed', { success: testResult.success });
+
+    res.json(testResult);
+  } catch (error: any) {
+    logger.error('Failed to test NTTH connection:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to test NTTH connection',
+      details: error.toString(),
     });
   }
 };

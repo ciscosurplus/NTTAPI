@@ -636,6 +636,90 @@ body {
     }
 }
 
+/* NTTH Configuration Section */
+.config-section {
+    max-width: 800px;
+}
+
+.config-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.status-display {
+    margin: 1rem 0;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.938rem;
+}
+
+.status-badge.success {
+    background: #d1f4e0;
+    color: #007a3d;
+}
+
+.status-badge.error {
+    background: #ffe5e5;
+    color: #d70015;
+}
+
+.info-box {
+    background: #f5f5f7;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.info-box h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #1d1d1f;
+}
+
+.info-box code {
+    background: #e5e5e7;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.875rem;
+}
+
+.info-box ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.info-box li {
+    margin-bottom: 0.5rem;
+}
+
+.success-message {
+    background: #d1f4e0;
+    color: #007a3d;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #34c759;
+}
+
+.error-message {
+    background: #ffe5e5;
+    color: #d70015;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #ff3b30;
+}
+
+.loading {
+    color: #6e6e73;
+    font-style: italic;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
     width: 8px;
