@@ -325,6 +325,135 @@ class TokenService {
       return null;
     }
   }
+
+  /**
+   * List all users
+   */
+  async listAllUsers(limit: number = 100, offset: number = 0): Promise<User[]> {
+    try {
+      const result = await query(
+        `SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
+
+      return result.rows;
+    } catch (error: any) {
+      logger.error('Failed to list all users:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Update user
+   */
+  async updateUser(
+    userId: string,
+    updates: { name?: string; email?: string }
+  ): Promise<User | null> {
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (updates.name !== undefined) {
+        fields.push(`name = $${paramIndex++}`);
+        values.push(updates.name);
+      }
+
+      if (updates.email !== undefined) {
+        fields.push(`email = $${paramIndex++}`);
+        values.push(updates.email);
+      }
+
+      if (fields.length === 0) {
+        return this.getUserById(userId);
+      }
+
+      values.push(userId);
+
+      const result = await query(
+        `UPDATE users
+         SET ${fields.join(', ')}
+         WHERE id = $${paramIndex}
+         RETURNING *`,
+        values
+      );
+
+      if (result.rows.length > 0) {
+        logger.info('User updated', { user_id: userId });
+        return result.rows[0];
+      }
+
+      return null;
+    } catch (error: any) {
+      logger.error('Failed to update user:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete user
+   */
+  async deleteUser(userId: string): Promise<boolean> {
+    try {
+      const result = await query(
+        `DELETE FROM users WHERE id = $1 RETURNING id`,
+        [userId]
+      );
+
+      if (result.rows.length > 0) {
+        logger.info('User deleted', { user_id: userId });
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      logger.error('Failed to delete user:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Regenerate token (create new token, revoke old one)
+   */
+  async regenerateToken(tokenId: string): Promise<CreateTokenResponse | null> {
+    try {
+      // Get existing token info
+      const existingToken = await this.getTokenById(tokenId);
+      if (!existingToken) {
+        return null;
+      }
+
+      // Generate new token
+      const newToken = this.generateToken();
+      const newTokenHash = await this.hashToken(newToken);
+
+      // Update token hash
+      const result = await query(
+        `UPDATE api_tokens
+         SET token_hash = $1, is_active = true
+         WHERE id = $2
+         RETURNING id, name, rate_limit, created_at`,
+        [newTokenHash, tokenId]
+      );
+
+      if (result.rows.length > 0) {
+        logger.info('API token regenerated', { token_id: tokenId });
+        return {
+          id: result.rows[0].id,
+          token: newToken,
+          name: result.rows[0].name,
+          rate_limit: result.rows[0].rate_limit,
+          created_at: result.rows[0].created_at,
+        };
+      }
+
+      return null;
+    } catch (error: any) {
+      logger.error('Failed to regenerate token:', error);
+      return null;
+    }
+  }
 }
 
 export default new TokenService();

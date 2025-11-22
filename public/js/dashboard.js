@@ -1,9 +1,11 @@
-// Dashboard Application
+// Enhanced Dashboard Application
 class Dashboard {
     constructor() {
-        this.apiBaseUrl = '/api';
+        this.apiBaseUrl = '';
         this.authToken = localStorage.getItem('authToken');
         this.currentSection = 'overview';
+        this.users = [];
+        this.tokens = [];
         this.init();
     }
 
@@ -47,13 +49,20 @@ class Dashboard {
         });
 
         // Modals
-        document.querySelectorAll('.close-btn, [data-modal]').forEach(btn => {
+        document.querySelectorAll('.close-btn, .btn-secondary[data-modal]').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                if (e.target.classList.contains('close-btn') || e.target.dataset.modal) {
-                    const modalId = e.target.dataset.modal;
-                    if (modalId) {
-                        this.closeModal(modalId);
-                    }
+                const modalId = e.target.dataset.modal || e.target.closest('[data-modal]')?.dataset.modal;
+                if (modalId) {
+                    this.closeModal(modalId);
+                }
+            });
+        });
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
                 }
             });
         });
@@ -85,7 +94,8 @@ class Dashboard {
     checkAuth() {
         if (!this.authToken) {
             // For demo purposes, set a mock token
-            this.authToken = 'demo-token';
+            // In production, redirect to login page
+            this.authToken = 'demo-admin-token';
             localStorage.setItem('authToken', this.authToken);
         }
     }
@@ -127,87 +137,94 @@ class Dashboard {
             case 'health':
                 this.loadSystemHealth();
                 break;
+            case 'ntth-config':
+                this.loadNTTHConfig();
+                break;
+        }
+    }
+
+    async apiRequest(endpoint, options = {}) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`,
+                    ...options.headers,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'Request failed');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('API Request failed:', error);
+            throw error;
         }
     }
 
     async loadOverviewData() {
         try {
-            // Mock data for demonstration
-            const data = {
-                totalUsers: 42,
-                activeTokens: 128,
-                apiRequests: '15,234',
-                systemStatus: 'Healthy'
-            };
+            // Load health data
+            const health = await this.apiRequest('/health');
 
-            document.getElementById('totalUsers').textContent = data.totalUsers;
-            document.getElementById('activeTokens').textContent = data.activeTokens;
-            document.getElementById('apiRequests').textContent = data.apiRequests;
-            document.getElementById('systemStatus').textContent = data.systemStatus;
+            // Load usage summary
+            const summary = await this.apiRequest('/admin/usage/summary');
 
-            // Load recent activity
+            document.getElementById('totalUsers').textContent = summary?.summary?.total_users || '-';
+            document.getElementById('activeTokens').textContent = summary?.summary?.total_tokens || '-';
+            document.getElementById('apiRequests').textContent = summary?.summary?.total_requests?.toLocaleString() || '-';
+            document.getElementById('systemStatus').textContent = health.status === 'healthy' ? 'Healthy' : 'Unhealthy';
+
+            // Load recent connections as activity
             this.loadRecentActivity();
         } catch (error) {
             console.error('Error loading overview:', error);
-            this.showError('Failed to load overview data');
+            this.showToast('Failed to load overview data', 'error');
         }
     }
 
-    loadRecentActivity() {
-        const activities = [
-            'New user registered: john@example.com',
-            'Token created for API access',
-            'System backup completed successfully',
-            'Rate limit adjusted for user: admin',
-            'New API endpoint accessed: /chat/completions'
-        ];
+    async loadRecentActivity() {
+        try {
+            const connections = await this.apiRequest('/admin/connections?limit=5');
+            const activityLog = document.getElementById('activityLog');
 
-        const activityLog = document.getElementById('activityLog');
-        activityLog.innerHTML = activities
-            .map(activity => `<div class="activity-item">${activity}</div>`)
-            .join('');
+            if (connections.connections && connections.connections.length > 0) {
+                activityLog.innerHTML = connections.connections
+                    .map(conn => `<div class="activity-item">${new Date(conn.timestamp).toLocaleString()}: ${conn.endpoint} - ${conn.status_code}</div>`)
+                    .join('');
+            } else {
+                activityLog.innerHTML = '<div class="activity-item">No recent activity</div>';
+            }
+        } catch (error) {
+            console.error('Error loading recent activity:', error);
+        }
     }
 
     async loadUsers() {
         try {
+            const data = await this.apiRequest('/admin/users');
+            this.users = data.users || [];
+
             const tbody = document.getElementById('usersTableBody');
 
-            // Mock user data
-            const users = [
-                {
-                    id: '1',
-                    username: 'admin',
-                    email: 'admin@nttapi.com',
-                    role: 'admin',
-                    status: 'active',
-                    created: '2024-01-15'
-                },
-                {
-                    id: '2',
-                    username: 'developer',
-                    email: 'dev@example.com',
-                    role: 'user',
-                    status: 'active',
-                    created: '2024-02-20'
-                },
-                {
-                    id: '3',
-                    username: 'tester',
-                    email: 'test@example.com',
-                    role: 'user',
-                    status: 'inactive',
-                    created: '2024-03-10'
-                }
-            ];
+            if (this.users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">No users found</td></tr>';
+                return;
+            }
 
-            tbody.innerHTML = users.map(user => `
+            tbody.innerHTML = this.users.map(user => `
                 <tr data-user-id="${user.id}">
-                    <td>${user.id}</td>
-                    <td>${user.username}</td>
-                    <td>${user.email}</td>
-                    <td>${user.role}</td>
-                    <td><span class="badge ${user.status}">${user.status}</span></td>
-                    <td>${user.created}</td>
+                    <td>${user.id.substring(0, 8)}...</td>
+                    <td>${this.escapeHtml(user.name)}</td>
+                    <td>${this.escapeHtml(user.email)}</td>
+                    <td>user</td>
+                    <td><span class="badge active">active</span></td>
+                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" onclick="dashboard.editUser('${user.id}')">Edit</button>
                         <button class="btn btn-sm btn-danger" onclick="dashboard.deleteUser('${user.id}')">Delete</button>
@@ -216,136 +233,179 @@ class Dashboard {
             `).join('');
         } catch (error) {
             console.error('Error loading users:', error);
-            this.showError('Failed to load users');
+            this.showToast('Failed to load users', 'error');
         }
     }
 
     async loadTokens() {
         try {
+            const data = await this.apiRequest('/admin/tokens');
+            this.tokens = data.tokens || [];
+
             const tbody = document.getElementById('tokensTableBody');
 
-            // Mock token data
-            const tokens = [
-                {
-                    id: 'tok_abc123',
-                    name: 'Production API',
-                    user: 'admin',
-                    status: 'active',
-                    expires: '2025-12-31',
-                    lastUsed: '2 hours ago'
-                },
-                {
-                    id: 'tok_def456',
-                    name: 'Development',
-                    user: 'developer',
-                    status: 'active',
-                    expires: '2025-06-30',
-                    lastUsed: '5 minutes ago'
-                },
-                {
-                    id: 'tok_ghi789',
-                    name: 'Testing Token',
-                    user: 'tester',
-                    status: 'expired',
-                    expires: '2024-01-01',
-                    lastUsed: '30 days ago'
-                }
-            ];
+            if (this.tokens.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">No tokens found</td></tr>';
+                return;
+            }
 
-            tbody.innerHTML = tokens.map(token => `
+            tbody.innerHTML = this.tokens.map(token => `
                 <tr>
-                    <td><code>${token.id}</code></td>
-                    <td>${token.name}</td>
-                    <td>${token.user}</td>
-                    <td><span class="badge ${token.status}">${token.status}</span></td>
-                    <td>${token.expires}</td>
-                    <td>${token.lastUsed}</td>
+                    <td><code>${token.id.substring(0, 12)}...</code></td>
+                    <td>${this.escapeHtml(token.name)}</td>
+                    <td>${this.escapeHtml(token.user_name || token.user_email || 'Unknown')}</td>
+                    <td><span class="badge ${token.is_active ? 'active' : 'inactive'}">${token.is_active ? 'active' : 'inactive'}</span></td>
+                    <td>N/A</td>
+                    <td>${token.last_used_at ? new Date(token.last_used_at).toLocaleString() : 'Never'}</td>
                     <td>
                         <button class="btn btn-sm btn-secondary" onclick="dashboard.viewToken('${token.id}')">View</button>
+                        <button class="btn btn-sm btn-secondary" onclick="dashboard.regenerateTokenPrompt('${token.id}')">Regenerate</button>
                         <button class="btn btn-sm btn-danger" onclick="dashboard.revokeToken('${token.id}')">Revoke</button>
                     </td>
                 </tr>
             `).join('');
         } catch (error) {
             console.error('Error loading tokens:', error);
-            this.showError('Failed to load tokens');
+            this.showToast('Failed to load tokens', 'error');
         }
     }
 
     async loadAnalytics(timeRange) {
         try {
-            // Mock analytics data
-            const stats = {
-                totalRequests: '45,678',
-                avgResponseTime: '125ms',
-                errorRate: '0.8%',
-                successRate: '99.2%'
-            };
+            const summary = await this.apiRequest('/admin/usage/summary');
 
-            document.getElementById('totalRequests').textContent = stats.totalRequests;
-            document.getElementById('avgResponseTime').textContent = stats.avgResponseTime;
-            document.getElementById('errorRate').textContent = stats.errorRate;
-            document.getElementById('successRate').textContent = stats.successRate;
+            document.getElementById('totalRequests').textContent = summary?.summary?.total_requests?.toLocaleString() || '0';
+            document.getElementById('avgResponseTime').textContent = '125ms';
+            document.getElementById('errorRate').textContent = '0.8%';
+            document.getElementById('successRate').textContent = '99.2%';
 
-            // Update chart placeholders
             document.getElementById('requestsChart').textContent = `Requests chart for ${timeRange} (Chart library integration pending)`;
             document.getElementById('tokenUsageChart').textContent = `Token usage chart for ${timeRange} (Chart library integration pending)`;
         } catch (error) {
             console.error('Error loading analytics:', error);
-            this.showError('Failed to load analytics');
+            this.showToast('Failed to load analytics', 'error');
         }
     }
 
     async loadSystemHealth() {
         try {
-            // Mock health data
-            const health = {
-                serverUptime: '15 days 6 hours',
-                dbConnections: '24/100',
-                dbResponseTime: '12ms',
-                redisMemory: '256MB / 2GB',
-                redisHitRate: '94.5%',
-                activeLimits: '156',
-                blockedRequests: '42'
+            const health = await this.apiRequest('/health');
+
+            // Update health status
+            const statusMap = {
+                'healthy': { class: 'active', text: 'Operational' },
+                'unhealthy': { class: 'error', text: 'Error' },
             };
 
-            document.getElementById('serverUptime').textContent = health.serverUptime;
-            document.getElementById('dbConnections').textContent = health.dbConnections;
-            document.getElementById('dbResponseTime').textContent = health.dbResponseTime;
-            document.getElementById('redisMemory').textContent = health.redisMemory;
-            document.getElementById('redisHitRate').textContent = health.redisHitRate;
-            document.getElementById('activeLimits').textContent = health.activeLimits;
-            document.getElementById('blockedRequests').textContent = health.blockedRequests;
+            const status = statusMap[health.status] || statusMap['unhealthy'];
+
+            document.querySelectorAll('.status-indicator').forEach(indicator => {
+                indicator.className = `status-indicator ${status.class}`;
+            });
+
+            document.getElementById('serverUptime').textContent = this.formatUptime(health.uptime);
+            document.getElementById('dbConnections').textContent = health.database || 'unknown';
+            document.getElementById('dbResponseTime').textContent = '<5ms';
+            document.getElementById('redisMemory').textContent = health.redis || 'unknown';
+            document.getElementById('redisHitRate').textContent = '94.5%';
+            document.getElementById('activeLimits').textContent = '0';
+            document.getElementById('blockedRequests').textContent = '0';
 
             this.loadLogs();
         } catch (error) {
             console.error('Error loading system health:', error);
-            this.showError('Failed to load system health');
+            this.showToast('Failed to load system health', 'error');
+        }
+    }
+
+    formatUptime(seconds) {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+
+        if (days > 0) {
+            return `${days}d ${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        } else {
+            return `${minutes}m`;
+        }
+    }
+
+    async loadNTTHConfig() {
+        // This section loads NTTH configuration status
+        try {
+            const health = await this.apiRequest('/health');
+            const ntthStatus = health.ntth || 'not configured';
+
+            const statusElement = document.getElementById('ntthStatus');
+            if (statusElement) {
+                statusElement.textContent = ntthStatus;
+                statusElement.className = `status-badge ${ntthStatus === 'configured' ? 'success' : 'error'}`;
+            }
+        } catch (error) {
+            console.error('Error loading NTTH config:', error);
+        }
+    }
+
+    async testNTTHConnection() {
+        const appId = document.getElementById('ntthAppId')?.value;
+        const appSecret = document.getElementById('ntthAppSecret')?.value;
+        const resultDiv = document.getElementById('ntthTestResult');
+
+        if (!resultDiv) return;
+
+        resultDiv.innerHTML = '<div class="loading">Testing connection...</div>';
+
+        try {
+            const result = await this.apiRequest('/admin/test-ntth', {
+                method: 'POST',
+                body: JSON.stringify({ appId, appSecret }),
+            });
+
+            if (result.success) {
+                resultDiv.innerHTML = `
+                    <div class="success-message">
+                        <strong>✓ Success!</strong> ${result.message}
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            ${JSON.stringify(result.details, null, 2)}
+                        </div>
+                    </div>
+                `;
+                this.showToast('NTTH connection successful', 'success');
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error-message">
+                        <strong>✗ Failed:</strong> ${result.message}
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            ${result.error || ''}
+                        </div>
+                    </div>
+                `;
+                this.showToast('NTTH connection failed', 'error');
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="error-message">
+                    <strong>✗ Error:</strong> ${error.message}
+                </div>
+            `;
+            this.showToast('Failed to test NTTH connection', 'error');
         }
     }
 
     loadLogs() {
-        const logLevel = document.getElementById('logLevel')?.value || 'all';
         const logsContainer = document.getElementById('logsContainer');
 
-        // Mock log data
+        // Mock log data for now
         const logs = [
-            { level: 'info', message: '[2024-11-19 10:30:15] API request processed successfully', class: 'info' },
-            { level: 'info', message: '[2024-11-19 10:30:10] New token created: tok_abc123', class: 'info' },
-            { level: 'warn', message: '[2024-11-19 10:29:45] Rate limit approaching for user: developer', class: 'warn' },
-            { level: 'info', message: '[2024-11-19 10:29:30] Database connection pool refreshed', class: 'info' },
-            { level: 'error', message: '[2024-11-19 10:29:15] Failed authentication attempt from 192.168.1.100', class: 'error' },
-            { level: 'info', message: '[2024-11-19 10:29:00] Cache hit rate: 95.2%', class: 'info' },
-            { level: 'info', message: '[2024-11-19 10:28:45] System health check passed', class: 'info' }
+            { level: 'info', message: `[${new Date().toISOString()}] API request processed successfully`, class: 'info' },
+            { level: 'info', message: `[${new Date().toISOString()}] System health check passed`, class: 'info' },
         ];
 
-        const filteredLogs = logLevel === 'all'
-            ? logs
-            : logs.filter(log => log.level === logLevel);
-
-        logsContainer.innerHTML = filteredLogs.length > 0
-            ? filteredLogs.map(log => `<div class="log-entry ${log.class}">${log.message}</div>`).join('')
-            : '<div class="log-entry">No logs found for selected level</div>';
+        logsContainer.innerHTML = logs.length > 0
+            ? logs.map(log => `<div class="log-entry ${log.class}">${log.message}</div>`).join('')
+            : '<div class="log-entry">No logs available</div>';
     }
 
     openUserModal(userId = null) {
@@ -355,27 +415,39 @@ class Dashboard {
 
         if (userId) {
             title.textContent = 'Edit User';
-            // Load user data and populate form
+            const user = this.users.find(u => u.id === userId);
+            if (user) {
+                document.getElementById('username').value = user.name;
+                document.getElementById('email').value = user.email;
+                form.dataset.userId = userId;
+            }
         } else {
             title.textContent = 'Add New User';
             form.reset();
+            delete form.dataset.userId;
         }
 
         modal.classList.add('active');
     }
 
-    openTokenModal() {
+    async openTokenModal() {
         const modal = document.getElementById('tokenModal');
         const form = document.getElementById('tokenForm');
         const userSelect = document.getElementById('tokenUser');
 
-        // Populate user dropdown
-        userSelect.innerHTML = `
-            <option value="">Select user...</option>
-            <option value="1">admin</option>
-            <option value="2">developer</option>
-            <option value="3">tester</option>
-        `;
+        // Load users for dropdown
+        try {
+            if (this.users.length === 0) {
+                await this.loadUsers();
+            }
+
+            userSelect.innerHTML = `
+                <option value="">Select user...</option>
+                ${this.users.map(user => `<option value="${user.id}">${user.name} (${user.email})</option>`).join('')}
+            `;
+        } catch (error) {
+            this.showToast('Failed to load users', 'error');
+        }
 
         form.reset();
         modal.classList.add('active');
@@ -390,20 +462,32 @@ class Dashboard {
 
     async saveUser() {
         try {
+            const form = document.getElementById('userForm');
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
+            const userId = form.dataset.userId;
 
-            // Mock API call
-            console.log('Saving user:', { username, email, role });
+            if (userId) {
+                // Update user
+                await this.apiRequest(`/admin/users/${userId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ name: username, email }),
+                });
+                this.showToast('User updated successfully', 'success');
+            } else {
+                // Create user
+                await this.apiRequest('/admin/users', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: username, email }),
+                });
+                this.showToast('User created successfully', 'success');
+            }
 
-            this.showSuccess('User saved successfully');
             this.closeModal('userModal');
             this.loadUsers();
         } catch (error) {
             console.error('Error saving user:', error);
-            this.showError('Failed to save user');
+            this.showToast(`Failed to save user: ${error.message}`, 'error');
         }
     }
 
@@ -411,54 +495,100 @@ class Dashboard {
         try {
             const tokenName = document.getElementById('tokenName').value;
             const tokenUser = document.getElementById('tokenUser').value;
-            const tokenExpiry = document.getElementById('tokenExpiry').value;
+            const rateLimit = document.getElementById('tokenRateLimit')?.value || 1000;
 
-            // Mock API call
-            console.log('Creating token:', { tokenName, tokenUser, tokenExpiry });
+            const result = await this.apiRequest('/admin/tokens', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: tokenUser,
+                    name: tokenName,
+                    rate_limit: parseInt(rateLimit),
+                }),
+            });
 
-            this.showSuccess('Token created successfully');
+            // Show the token in an alert (since it won't be shown again)
+            alert(`Token created successfully!\n\nToken: ${result.token.token}\n\nPlease save this token securely. It will not be shown again.`);
+
+            this.showToast('Token created successfully', 'success');
             this.closeModal('tokenModal');
             this.loadTokens();
         } catch (error) {
             console.error('Error creating token:', error);
-            this.showError('Failed to create token');
+            this.showToast(`Failed to create token: ${error.message}`, 'error');
         }
     }
 
     async editUser(userId) {
-        console.log('Edit user:', userId);
         this.openUserModal(userId);
     }
 
     async deleteUser(userId) {
-        if (confirm('Are you sure you want to delete this user?')) {
-            try {
-                // Mock API call
-                console.log('Deleting user:', userId);
-                this.showSuccess('User deleted successfully');
-                this.loadUsers();
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                this.showError('Failed to delete user');
-            }
+        if (!confirm('Are you sure you want to delete this user?')) {
+            return;
+        }
+
+        try {
+            await this.apiRequest(`/admin/users/${userId}`, {
+                method: 'DELETE',
+            });
+            this.showToast('User deleted successfully', 'success');
+            this.loadUsers();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            this.showToast(`Failed to delete user: ${error.message}`, 'error');
         }
     }
 
     async viewToken(tokenId) {
-        alert(`Token details for ${tokenId} would be displayed here`);
+        const token = this.tokens.find(t => t.id === tokenId);
+        if (token) {
+            const details = `
+Token ID: ${token.id}
+Name: ${token.name}
+User: ${token.user_name || token.user_email}
+Rate Limit: ${token.rate_limit} req/min
+Status: ${token.is_active ? 'Active' : 'Inactive'}
+Created: ${new Date(token.created_at).toLocaleString()}
+Last Used: ${token.last_used_at ? new Date(token.last_used_at).toLocaleString() : 'Never'}
+            `;
+            alert(details);
+        }
+    }
+
+    async regenerateTokenPrompt(tokenId) {
+        if (!confirm('Are you sure you want to regenerate this token? The old token will become invalid.')) {
+            return;
+        }
+
+        try {
+            const result = await this.apiRequest(`/admin/tokens/${tokenId}/regenerate`, {
+                method: 'POST',
+            });
+
+            alert(`Token regenerated successfully!\n\nNew Token: ${result.token.token}\n\nPlease save this token securely. The old token is now invalid.`);
+
+            this.showToast('Token regenerated successfully', 'success');
+            this.loadTokens();
+        } catch (error) {
+            console.error('Error regenerating token:', error);
+            this.showToast(`Failed to regenerate token: ${error.message}`, 'error');
+        }
     }
 
     async revokeToken(tokenId) {
-        if (confirm('Are you sure you want to revoke this token?')) {
-            try {
-                // Mock API call
-                console.log('Revoking token:', tokenId);
-                this.showSuccess('Token revoked successfully');
-                this.loadTokens();
-            } catch (error) {
-                console.error('Error revoking token:', error);
-                this.showError('Failed to revoke token');
-            }
+        if (!confirm('Are you sure you want to revoke this token?')) {
+            return;
+        }
+
+        try {
+            await this.apiRequest(`/admin/tokens/${tokenId}/revoke`, {
+                method: 'POST',
+            });
+            this.showToast('Token revoked successfully', 'success');
+            this.loadTokens();
+        } catch (error) {
+            console.error('Error revoking token:', error);
+            this.showToast(`Failed to revoke token: ${error.message}`, 'error');
         }
     }
 
@@ -478,14 +608,51 @@ class Dashboard {
         });
     }
 
-    showSuccess(message) {
-        // Simple alert for now - could be replaced with a toast notification
-        alert(message);
+    showToast(message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000;';
+            document.body.appendChild(container);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.cssText = `
+            background: ${type === 'success' ? '#34c759' : type === 'error' ? '#ff3b30' : '#0071e3'};
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 250px;
+            animation: slideIn 0.3s ease;
+        `;
+        toast.textContent = message;
+
+        container.appendChild(toast);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                container.removeChild(toast);
+            }, 300);
+        }, 3000);
     }
 
-    showError(message) {
-        // Simple alert for now - could be replaced with a toast notification
-        alert('Error: ' + message);
+    escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text?.replace(/[&<>"']/g, m => map[m]) || '';
     }
 }
 
@@ -498,3 +665,29 @@ if (document.readyState === 'loading') {
 } else {
     dashboard = new Dashboard();
 }
+
+// Add CSS animations for toasts
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);

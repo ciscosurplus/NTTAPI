@@ -271,6 +271,91 @@ class NTTHAuthService {
   isConfigured(): boolean {
     return !!(this.appId && this.appSecret);
   }
+
+  /**
+   * Test NTTH API connection
+   */
+  async testConnection(testAppId?: string, testAppSecret?: string): Promise<{
+    success: boolean;
+    message: string;
+    details?: any;
+    error?: string;
+  }> {
+    try {
+      const appId = testAppId || this.appId;
+      const appSecret = testAppSecret || this.appSecret;
+
+      if (!appId || !appSecret) {
+        return {
+          success: false,
+          message: 'NTTH API credentials not provided',
+          error: 'Missing appId or appSecret',
+        };
+      }
+
+      logger.info('Testing NTTH API connection...');
+
+      // Test authentication
+      const authResponse = await this.axiosInstance.post<NTTHAuthResponse>(
+        '/auth/appLogin',
+        {
+          id: appId,
+          secret: appSecret,
+        }
+      );
+
+      if (authResponse.data && authResponse.data.token) {
+        // Test a simple API call with the token
+        const testClient = axios.create({
+          baseURL: this.baseURL,
+          timeout: 30000,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authResponse.data.token}`,
+          },
+        });
+
+        // Try to fetch models as a test
+        const modelsResponse = await testClient.get('/chat/models');
+
+        logger.info('NTTH API connection test successful');
+
+        return {
+          success: true,
+          message: 'Successfully connected to NTTH API',
+          details: {
+            baseURL: this.baseURL,
+            authenticated: true,
+            tokenExpiry: authResponse.data.expiry,
+            modelsCount: modelsResponse.data?.length || 'unknown',
+          },
+        };
+      }
+
+      return {
+        success: false,
+        message: 'Authentication succeeded but no token received',
+        error: 'Invalid response format',
+      };
+    } catch (error: any) {
+      logger.error('NTTH API connection test failed:', {
+        error: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+
+      return {
+        success: false,
+        message: 'Failed to connect to NTTH API',
+        error: error.response?.data?.message || error.message,
+        details: {
+          baseURL: this.baseURL,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+        },
+      };
+    }
+  }
 }
 
 export default new NTTHAuthService();
