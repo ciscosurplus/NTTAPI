@@ -48,7 +48,7 @@ Production-ready gateway that provides an OpenAI-compatible interface to NTTH AP
 
 - **🔌 OpenAI-Compatible** - Drop-in replacement for OpenAI SDK clients
 - **🔐 Token Management** - Secure API key generation and management
-- **📊 Usage Analytics** - Track requests, tokens, and costs per customer
+- **📊 Usage Analytics** - Track requests, tokens, and usage metrics per customer
 - **⚡ Rate Limiting** - Protect your NTTH API usage with customizable limits
 - **📈 Analytics Dashboard** - Real-time usage statistics and trends (API endpoints)
 - **🔍 Connection Logs** - Monitor all API requests with detailed logging
@@ -104,7 +104,7 @@ openapi-generator-cli generate \
 - ✅ You want OpenAI SDK compatibility (drop-in replacement)
 - ✅ You need to manage multiple users/customers with separate API keys
 - ✅ You require usage tracking, analytics, and rate limiting
-- ✅ You want to control costs and monitor API consumption
+- ✅ You want to monitor and control API consumption
 - ✅ You're building a production SaaS application
 
 ## 🚀 Quick Start
@@ -156,8 +156,14 @@ curl -X POST https://api.ntth.ai/v1/chat \
 See **[ntth.md](./ntth.md)** for comprehensive examples including:
 - RAG workspace setup
 - Function calling / tool use
-- Image generation
+- Image generation and pipeline management
 - Voice agent configuration
+
+**Latest Features:**
+- Image generation with DALL-E, Titan, and other models
+- Image pipeline status tracking (`GET /chat/image/status/{id}`)
+- Bulk image job management (`GET /chat/pipeline/jobs`)
+- Advanced filtering and pagination for image jobs
 
 ---
 
@@ -181,11 +187,11 @@ cd NTTAPI
 cp .env.example .env
 # Edit .env and set your NTTH_APP_ID and NTTH_APP_SECRET
 
-# 3. Start services
+# 3. Start services (database migrations run automatically)
 docker-compose up -d
 
-# 4. Initialize database
-docker-compose exec app npm run migrate:up
+# 4. Wait for services to be healthy (check logs if needed)
+docker-compose logs -f app
 
 # 5. Create your first user and token
 curl -X POST http://localhost:3000/admin/users \
@@ -325,9 +331,10 @@ console.log(response.choices[0].message.content);
 
 ### Usage Tracking
 - Log every API request with full details
-- Track token consumption per request
+- Track token consumption per request (prompt + response tokens)
 - Monitor request duration and status codes
 - View usage by model, endpoint, and date
+- **Note:** Cost estimation is planned but not yet implemented (see Roadmap)
 
 ### Analytics
 - Real-time usage statistics
@@ -388,14 +395,23 @@ MIT License - See [LICENSE](LICENSE) file for details
 
 ## 🎯 Roadmap
 
-- [ ] Web-based admin dashboard UI
-- [ ] GraphQL API support
-- [ ] Webhook notifications
-- [ ] Multi-tenancy support
-- [ ] Advanced analytics and reporting
-- [ ] Cost estimation and budgeting
-- [ ] API key rotation
-- [ ] OAuth2 support
+### Recently Completed ✅
+- [x] Image pipeline status tracking API
+- [x] Bulk image job management and filtering
+- [x] Comprehensive API documentation and examples
+- [x] OpenAPI 3.0 specifications for all services
+
+### Planned Features
+- [ ] Web-based admin dashboard UI (P0)
+- [ ] Cost estimation and budgeting (P1)
+- [ ] API key rotation (P0)
+- [ ] OAuth2 support (P0)
+- [ ] Webhook notifications (P2)
+- [ ] Multi-tenancy support (P1)
+- [ ] Advanced analytics and reporting (P1)
+- [ ] GraphQL API support (P3)
+
+See **[ROADMAP.md](./ROADMAP.md)** for detailed feature descriptions and priorities.
 
 ## ⭐ Show Your Support
 
