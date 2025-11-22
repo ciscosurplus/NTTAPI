@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import logger from './config/logger';
-import { connectRedis } from './config/redis';
+import { connectRedis, redisClient } from './config/redis';
 import { pool } from './config/database';
 import ntthAuthService from './services/ntth-auth.service';
 
@@ -55,24 +55,45 @@ app.use(morgan('combined', {
  * Health check endpoint
  */
 app.get('/health', async (_req: Request, res: Response) => {
+  const health: any = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: 'disconnected',
+    redis: 'disconnected',
+    ntth: 'not configured',
+  };
+
+  let isHealthy = true;
+
   try {
     // Check database connection
     await pool.query('SELECT 1');
-
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: 'connected',
-      redis: 'connected',
-      ntth: ntthAuthService.isConfigured() ? 'configured' : 'not configured',
-    });
+    health.database = 'connected';
   } catch (error: any) {
-    logger.error('Health check failed:', error);
-    res.status(503).json({
-      status: 'unhealthy',
-      error: error.message,
-    });
+    logger.error('Database health check failed:', error);
+    health.database = 'disconnected';
+    isHealthy = false;
+  }
+
+  try {
+    // Check Redis connection
+    await redisClient.ping();
+    health.redis = 'connected';
+  } catch (error: any) {
+    logger.error('Redis health check failed:', error);
+    health.redis = 'disconnected';
+    isHealthy = false;
+  }
+
+  // Check NTTH configuration
+  health.ntth = ntthAuthService.isConfigured() ? 'configured' : 'not configured';
+
+  if (isHealthy) {
+    res.json(health);
+  } else {
+    health.status = 'unhealthy';
+    res.status(503).json(health);
   }
 });
 
@@ -187,14 +208,34 @@ async function start() {
  * Graceful shutdown
  */
 process.on('SIGTERM', async () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  await pool.end();
+  logger.info('SIGTERM signal received: closing connections gracefully');
+  try {
+    // Close database pool
+    await pool.end();
+    logger.info('Database pool closed');
+
+    // Close Redis connection
+    await redisClient.quit();
+    logger.info('Redis connection closed');
+  } catch (error) {
+    logger.error('Error during graceful shutdown:', error);
+  }
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  await pool.end();
+  logger.info('SIGINT signal received: closing connections gracefully');
+  try {
+    // Close database pool
+    await pool.end();
+    logger.info('Database pool closed');
+
+    // Close Redis connection
+    await redisClient.quit();
+    logger.info('Redis connection closed');
+  } catch (error) {
+    logger.error('Error during graceful shutdown:', error);
+  }
   process.exit(0);
 });
 

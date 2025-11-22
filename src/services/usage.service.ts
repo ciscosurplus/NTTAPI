@@ -195,23 +195,33 @@ class UsageService {
     days: number = 7
   ): Promise<{ date: string; requests: number; tokens: number }[]> {
     try {
-      const conditions = tokenId ? `WHERE token_id = $2` : '';
-      const values = tokenId
-        ? [days, tokenId]
-        : [days];
+      // Build query with proper parameterization
+      let queryText: string;
+      let values: any[];
 
-      const result = await query(
-        `SELECT
+      if (tokenId) {
+        queryText = `SELECT
           DATE(created_at) as date,
           COUNT(*) as requests,
           COALESCE(SUM(total_tokens), 0) as tokens
          FROM usage_logs
-         ${conditions}
-         WHERE created_at >= CURRENT_DATE - INTERVAL '${days} days'
+         WHERE token_id = $1 AND created_at >= CURRENT_DATE - make_interval(days => $2)
          GROUP BY DATE(created_at)
-         ORDER BY date ASC`,
-        values
-      );
+         ORDER BY date ASC`;
+        values = [tokenId, days];
+      } else {
+        queryText = `SELECT
+          DATE(created_at) as date,
+          COUNT(*) as requests,
+          COALESCE(SUM(total_tokens), 0) as tokens
+         FROM usage_logs
+         WHERE created_at >= CURRENT_DATE - make_interval(days => $1)
+         GROUP BY DATE(created_at)
+         ORDER BY date ASC`;
+        values = [days];
+      }
+
+      const result = await query(queryText, values);
 
       return result.rows.map((row) => ({
         date: row.date.toISOString().split('T')[0],

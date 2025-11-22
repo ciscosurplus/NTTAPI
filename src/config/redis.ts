@@ -10,9 +10,13 @@ const redisClient = createClient({
     reconnectStrategy: (retries) => {
       if (retries > 10) {
         logger.error('Redis reconnection failed after 10 attempts');
-        return new Error('Redis reconnection failed');
+        // Return false to stop reconnecting
+        return false;
       }
-      return retries * 100;
+      // Exponential backoff: 100ms, 200ms, 300ms, etc.
+      const delay = retries * 100;
+      logger.debug(`Redis reconnecting in ${delay}ms (attempt ${retries})`);
+      return delay;
     },
   },
 });

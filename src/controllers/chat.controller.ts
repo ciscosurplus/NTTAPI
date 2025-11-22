@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AxiosResponse } from 'axios';
 import ntthProxyService from '../services/ntth-proxy.service';
 import usageService from '../services/usage.service';
 import logger from '../config/logger';
@@ -28,31 +29,88 @@ export const chatCompletion = async (req: Request, res: Response): Promise<void>
     // Proxy to NTTH API
     const response = await ntthProxyService.chatCompletion(openaiRequest);
 
-    // Log usage
-    const duration = Date.now() - startTime;
-    if (authReq.token) {
-      await usageService.logUsage({
-        token_id: authReq.token.id,
-        endpoint: '/v1/chat/completions',
-        method: 'POST',
-        status_code: 200,
-        prompt_tokens: response.usage.prompt_tokens,
-        completion_tokens: response.usage.completion_tokens,
-        total_tokens: response.usage.total_tokens,
-        model_id: openaiRequest.model,
-        request_duration_ms: duration,
-        ip_address: req.ip || 'unknown',
-        user_agent: req.get('user-agent') || 'unknown',
+    // Check if this is a streaming response (AxiosResponse) or regular response
+    if ('status' in response && 'data' in response && typeof response.data === 'object' && 'pipe' in response.data) {
+      // This is a streaming response (AxiosResponse with stream)
+      const streamResponse = response as AxiosResponse;
+
+      logger.debug('Piping streaming response to client');
+
+      // Set headers for SSE streaming
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      // Pipe the stream from NTTH API to client
+      streamResponse.data.pipe(res);
+
+      // Handle stream end
+      streamResponse.data.on('end', () => {
+        const duration = Date.now() - startTime;
+
+        // Log usage for streaming (we can't get token counts from stream easily)
+        if (authReq.token) {
+          usageService.logUsage({
+            token_id: authReq.token.id,
+            endpoint: '/v1/chat/completions',
+            method: 'POST',
+            status_code: 200,
+            model_id: openaiRequest.model,
+            request_duration_ms: duration,
+            ip_address: req.ip || 'unknown',
+            user_agent: req.get('user-agent') || 'unknown',
+          }).catch(err => logger.error('Failed to log streaming usage:', err));
+        }
+
+        logger.info('Streaming chat completion successful', {
+          model: openaiRequest.model,
+          duration_ms: duration,
+        });
       });
+
+      // Handle stream errors
+      streamResponse.data.on('error', (error: Error) => {
+        logger.error('Stream error:', error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: {
+              message: 'Stream error occurred',
+              type: 'server_error',
+            },
+          });
+        }
+      });
+
+    } else {
+      // This is a regular non-streaming response
+      const chatResponse = response as any;
+
+      // Log usage
+      const duration = Date.now() - startTime;
+      if (authReq.token) {
+        await usageService.logUsage({
+          token_id: authReq.token.id,
+          endpoint: '/v1/chat/completions',
+          method: 'POST',
+          status_code: 200,
+          prompt_tokens: chatResponse.usage?.prompt_tokens,
+          completion_tokens: chatResponse.usage?.completion_tokens,
+          total_tokens: chatResponse.usage?.total_tokens,
+          model_id: openaiRequest.model,
+          request_duration_ms: duration,
+          ip_address: req.ip || 'unknown',
+          user_agent: req.get('user-agent') || 'unknown',
+        });
+      }
+
+      logger.info('Chat completion successful', {
+        model: openaiRequest.model,
+        duration_ms: duration,
+        tokens: chatResponse.usage?.total_tokens,
+      });
+
+      res.json(chatResponse);
     }
-
-    logger.info('Chat completion successful', {
-      model: openaiRequest.model,
-      duration_ms: duration,
-      tokens: response.usage.total_tokens,
-    });
-
-    res.json(response);
   } catch (error: any) {
     const duration = Date.now() - startTime;
 

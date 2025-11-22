@@ -1,11 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { query } from '../config/database';
+import { redisClient } from '../config/redis';
 import logger from '../config/logger';
 import { ApiToken, CreateTokenRequest, CreateTokenResponse, User } from '../types';
 
 const BCRYPT_ROUNDS = 10;
 const TOKEN_PREFIX = process.env.API_TOKEN_PREFIX || 'sk-ntth-';
+const TOKEN_CACHE_TTL = 3600; // Cache tokens for 1 hour
 
 class TokenService {
   /**
@@ -31,6 +34,15 @@ class TokenService {
   }
 
   /**
+   * Get a fast hash of the token for Redis key (not for security, just for caching)
+   */
+  private getTokenCacheKey(token: string): string {
+    // Use SHA256 for a fast, consistent hash for caching
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    return `token:cache:${hash}`;
+  }
+
+  /**
    * Create a new API token
    */
   async createToken(data: CreateTokenRequest): Promise<CreateTokenResponse> {
@@ -53,6 +65,10 @@ class TokenService {
         name: data.name,
       });
 
+      // Cache the token -> id mapping for faster future lookups
+      const cacheKey = this.getTokenCacheKey(token);
+      await redisClient.setEx(cacheKey, TOKEN_CACHE_TTL, tokenData.id);
+
       return {
         id: tokenData.id,
         token, // Return plain token only once
@@ -67,11 +83,63 @@ class TokenService {
   }
 
   /**
-   * Validate and get token details
+   * Validate and get token details - OPTIMIZED with Redis caching
    */
   async validateToken(token: string): Promise<ApiToken | null> {
     try {
-      // Get all active tokens (we need to check hash for each)
+      const cacheKey = this.getTokenCacheKey(token);
+
+      // Try to get token ID from cache
+      const cachedTokenId = await redisClient.get(cacheKey);
+
+      if (cachedTokenId) {
+        // Fast path: Get token details from database by ID
+        const result = await query(
+          `SELECT t.*, u.name as user_name, u.email as user_email
+           FROM api_tokens t
+           JOIN users u ON t.user_id = u.id
+           WHERE t.id = $1 AND t.is_active = true`,
+          [cachedTokenId]
+        );
+
+        if (result.rows.length > 0) {
+          const tokenData = result.rows[0];
+
+          // Verify the token hash matches (security check)
+          const isValid = await this.verifyToken(token, tokenData.token_hash);
+
+          if (isValid) {
+            // Update last_used_at asynchronously (don't wait)
+            this.updateLastUsed(tokenData.id).catch(err =>
+              logger.error('Failed to update last_used_at:', err)
+            );
+
+            return {
+              id: tokenData.id,
+              user_id: tokenData.user_id,
+              token_hash: tokenData.token_hash,
+              name: tokenData.name,
+              rate_limit: tokenData.rate_limit,
+              is_active: tokenData.is_active,
+              created_at: tokenData.created_at,
+              last_used_at: tokenData.last_used_at,
+            };
+          } else {
+            // Cache was invalid, clear it
+            await redisClient.del(cacheKey);
+            return null;
+          }
+        } else {
+          // Token no longer exists or is inactive, clear cache
+          await redisClient.del(cacheKey);
+          return null;
+        }
+      }
+
+      // Slow path: Token not in cache, need to check all active tokens
+      // This happens on first use or after cache expiry
+      logger.debug('Token not in cache, performing full validation');
+
       const result = await query(
         `SELECT t.*, u.name as user_name, u.email as user_email
          FROM api_tokens t
@@ -84,8 +152,13 @@ class TokenService {
       for (const row of result.rows) {
         const isValid = await this.verifyToken(token, row.token_hash);
         if (isValid) {
-          // Update last_used_at
-          await this.updateLastUsed(row.id);
+          // Cache this token for future requests
+          await redisClient.setEx(cacheKey, TOKEN_CACHE_TTL, row.id);
+
+          // Update last_used_at asynchronously
+          this.updateLastUsed(row.id).catch(err =>
+            logger.error('Failed to update last_used_at:', err)
+          );
 
           return {
             id: row.id,
@@ -192,6 +265,11 @@ class TokenService {
 
       if (result.rows.length > 0) {
         logger.info('API token revoked', { token_id: tokenId });
+
+        // Clear any cached references to this token
+        // Note: We can't easily clear the specific cache entry without the token value
+        // But it will be invalidated on next use when is_active check fails
+
         return true;
       }
 

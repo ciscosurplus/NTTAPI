@@ -23,8 +23,28 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-  logger.error('Unexpected database error:', err);
-  process.exit(-1);
+  logger.error('Unexpected database pool error:', err);
+
+  // Only exit on critical connection errors
+  // Check for specific error codes that indicate complete database failure
+  const criticalErrors = [
+    'ECONNREFUSED',  // Connection refused
+    'ENOTFOUND',     // Host not found
+    'ETIMEDOUT',     // Connection timeout
+    '57P01',         // PostgreSQL: admin shutdown
+    '57P02',         // PostgreSQL: crash shutdown
+    '57P03',         // PostgreSQL: cannot connect now
+  ];
+
+  const errorCode = (err as any).code;
+  const isCritical = criticalErrors.includes(errorCode);
+
+  if (isCritical) {
+    logger.error('Critical database error detected. Shutting down.', { code: errorCode });
+    process.exit(1);
+  } else {
+    logger.warn('Non-critical database pool error. Connection may recover.', { code: errorCode });
+  }
 });
 
 export const query = async (text: string, params?: any[]) => {

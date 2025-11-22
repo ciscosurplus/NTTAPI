@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { AxiosResponse } from 'axios';
 import ntthAuthService from './ntth-auth.service';
 import logger from '../config/logger';
 import {
@@ -14,6 +15,23 @@ class NTTHProxyService {
    * Transform OpenAI chat request to NTTH format
    */
   private transformChatRequest(openaiRequest: OpenAIChatCompletionRequest): NTTHChatRequest {
+    // Handle stop sequences - NTTH API only supports single stop string
+    // Use first stop sequence if array provided
+    let stopSequence: string | null = null;
+    if (openaiRequest.stop) {
+      if (Array.isArray(openaiRequest.stop)) {
+        stopSequence = openaiRequest.stop.length > 0 ? openaiRequest.stop[0] : null;
+        if (openaiRequest.stop.length > 1) {
+          logger.warn('Multiple stop sequences provided, only using first one. NTTH API limitation.', {
+            provided: openaiRequest.stop.length,
+            using: stopSequence,
+          });
+        }
+      } else {
+        stopSequence = openaiRequest.stop;
+      }
+    }
+
     return {
       id: uuidv4(),
       modelId: openaiRequest.model, // Assume model ID is passed directly
@@ -25,7 +43,7 @@ class NTTHProxyService {
       maxTokens: openaiRequest.max_tokens,
       stream: openaiRequest.stream || false,
       presencePenalty: openaiRequest.presence_penalty,
-      stop: Array.isArray(openaiRequest.stop) ? openaiRequest.stop[0] : openaiRequest.stop || null,
+      stop: stopSequence,
       frequencyPenalty: openaiRequest.frequency_penalty,
       topP: openaiRequest.top_p,
       temperature: openaiRequest.temperature,
@@ -39,7 +57,7 @@ class NTTHProxyService {
     ntthResponse: any,
     modelId: string
   ): OpenAIChatCompletionResponse {
-    // NTTH returns streaming responses, we need to handle non-streaming
+    // NTTH returns different formats, handle both
     const content = ntthResponse.choices?.[0]?.message?.content || ntthResponse.content || '';
 
     return {
@@ -58,19 +76,20 @@ class NTTHProxyService {
         },
       ],
       usage: {
-        prompt_tokens: ntthResponse.usage?.promptTokens || 0,
-        completion_tokens: ntthResponse.usage?.completionTokens || 0,
-        total_tokens: ntthResponse.usage?.totalTokens || 0,
+        prompt_tokens: ntthResponse.usage?.promptTokens || ntthResponse.metadata?.usage?.promptTokens || 0,
+        completion_tokens: ntthResponse.usage?.completionTokens || ntthResponse.metadata?.usage?.completionTokens || 0,
+        total_tokens: ntthResponse.usage?.totalTokens || ntthResponse.metadata?.usage?.totalTokens || 0,
       },
     };
   }
 
   /**
    * Proxy chat completion request to NTTH API
+   * For streaming requests, returns the raw axios response to be handled by controller
    */
   async chatCompletion(
     openaiRequest: OpenAIChatCompletionRequest
-  ): Promise<OpenAIChatCompletionResponse> {
+  ): Promise<OpenAIChatCompletionResponse | AxiosResponse> {
     try {
       const ntthRequest = this.transformChatRequest(openaiRequest);
       const client = await ntthAuthService.getAuthenticatedClient();
@@ -78,19 +97,39 @@ class NTTHProxyService {
       logger.debug('Sending chat request to NTTH API', {
         model: ntthRequest.modelId,
         messages: ntthRequest.messages.length,
+        stream: ntthRequest.stream,
       });
 
-      const response = await client.post('/chat', ntthRequest, {
-        headers: {
-          Accept: openaiRequest.stream ? 'text/event-stream' : 'application/json',
-        },
-      });
+      // Handle streaming vs non-streaming differently
+      if (ntthRequest.stream) {
+        // For streaming, return raw response with stream
+        const response = await client.post('/chat', ntthRequest, {
+          headers: {
+            Accept: 'text/event-stream',
+          },
+          responseType: 'stream', // Important: get stream, not parsed data
+        });
 
-      logger.debug('Received response from NTTH API', {
-        status: response.status,
-      });
+        logger.debug('Streaming response initiated from NTTH API', {
+          status: response.status,
+        });
 
-      return this.transformChatResponse(response.data, ntthRequest.modelId);
+        // Return raw response for controller to handle streaming
+        return response;
+      } else {
+        // For non-streaming, parse and transform response
+        const response = await client.post('/chat', ntthRequest, {
+          headers: {
+            Accept: 'application/json',
+          },
+        });
+
+        logger.debug('Received non-streaming response from NTTH API', {
+          status: response.status,
+        });
+
+        return this.transformChatResponse(response.data, ntthRequest.modelId);
+      }
     } catch (error: any) {
       logger.error('Failed to proxy chat completion to NTTH:', {
         error: error.message,
