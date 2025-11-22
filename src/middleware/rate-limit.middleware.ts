@@ -21,7 +21,8 @@ export const rateLimitByToken = async (
   next: NextFunction
 ): Promise<void> => {
   if (!RATE_LIMIT_ENABLED) {
-    return next();
+    next();
+    return;
   }
 
   try {
@@ -30,7 +31,8 @@ export const rateLimitByToken = async (
 
     if (!token) {
       // If no token, apply global rate limit
-      return globalRateLimit(req, res, next);
+      await globalRateLimit(req, res, next);
+      return;
     }
 
     const tokenId = token.id;
